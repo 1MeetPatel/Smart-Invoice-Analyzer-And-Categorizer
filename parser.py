@@ -83,6 +83,43 @@ def extract_date(text):
     return "N/A"
 
 
+def normalize_date(date_str):
+    """Normalize various date strings to MM/DD/YYYY format."""
+    if not date_str or date_str == 'N/A': return 'N/A'
+    
+    # Replace separators with slashes
+    date_str = date_str.replace('-', '/').replace('.', '/').replace(' ', '/')
+    
+    # Handle Month names (e.g. 12/Apr/2024 -> 04/12/2024)
+    months = {
+        'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
+        'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+    }
+    
+    parts = [p.strip() for p in date_str.split('/') if p.strip()]
+    if len(parts) == 3:
+        # Check if one part is a month name
+        for i, p in enumerate(parts):
+            p_lower = p.lower()[:3]
+            if p_lower in months:
+                parts[i] = months[p_lower]
+        
+        # Ensure 2 digits for day/month and 4 for year
+        try:
+            p1, p2, p3 = parts
+            # Logic to guess YYYY position
+            if len(p3) == 4: # MM/DD/YYYY or DD/MM/YYYY
+                # Default to MM/DD/YYYY if ambiguous, or keep original order
+                return f"{p1.zfill(2)}/{p2.zfill(2)}/{p3}"
+            elif len(p1) == 4: # YYYY/MM/DD
+                return f"{p2.zfill(2)}/{p3.zfill(2)}/{p1}"
+            elif len(p3) == 2: # MM/DD/YY
+                return f"{p1.zfill(2)}/{p2.zfill(2)}/20{p3}"
+        except: pass
+        
+    return date_str
+
+
 def extract_amount(text, field_type='total'):
     """Extract monetary amounts handling European formats and multiple values on one line."""
     if field_type == 'total':
@@ -90,7 +127,8 @@ def extract_amount(text, field_type='total'):
     elif field_type == 'subtotal':
         labels = r'(?:Sub\s*Total|Before\s*Tax|Taxable\s*Amount|Total\s*Excl\s*VAT|Net\s*worth)'
     elif field_type == 'tax':
-        labels = r'(?:Tax|VAT|GST|Sales\s*Tax|CGST|SGST|IGST|Taxes)'
+        # Avoid matching VAT [%] headers by using negative lookahead for '%'
+        labels = r'(?:Total\s*VAT|Total\s*Tax|VAT(?!\s*\[)|Tax(?!\s*\[)|GST|Sales\s*Tax|CGST|SGST|IGST|Taxes)'
     
     # 1. Label-based search
     # This regex matches the entire line following a label to find multiple amounts
@@ -100,35 +138,73 @@ def extract_amount(text, field_type='total'):
     all_found_amounts = []
     
     for match in matches:
-        line_content = match.group(1).split('\n')[0] # Only look at the same line
-        # Find all number-like strings in this line
-        # Matches: 1.234,56, 1 234,56, 1,234.56, 1234.56
-        num_matches = re.findall(r'[₹\$€£]?\s*(\d[\d\s.,]*[.,]\d{2})\b', line_content)
+        # Look at the current line and the next 2 lines (common in tables)
+        start_pos = match.start()
+        remaining_text = text[start_pos:start_pos + 500] # Look ahead a bit
+        lines = remaining_text.split('\n')[:3]
         
         line_amounts = []
-        for nm in num_matches:
-            try:
-                # Normalize: remove currency, remove spaces
-                clean = nm.strip().replace(' ', '')
-                # Handle comma as decimal if it's 2 digits from end
-                if ',' in clean and ('.' not in clean or clean.rfind(',') > clean.rfind('.')):
-                    clean = clean.replace('.', '').replace(',', '.')
-                else:
-                    clean = clean.replace(',', '')
-                
-                val = float(clean)
-                if val > 0: line_amounts.append(val)
-            except: continue
+        for line in lines:
+            # Find all number-like strings in this line
+            num_matches = re.findall(r'[₹\$€£]?\s*(\d[\d\s.,]*[.,]\d{2})\b', line)
+            
+            for nm in num_matches:
+                try:
+                    clean = nm.strip().replace(' ', '')
+                    if ',' in clean and ('.' not in clean or clean.rfind(',') > clean.rfind('.')):
+                        clean = clean.replace('.', '').replace(',', '.')
+                    else:
+                        clean = clean.replace(',', '')
+                    
+                    val = float(clean)
+                    if val > 0: line_amounts.append(val)
+                except: continue
+            
+            # If we found amounts on this line, we usually don't need to look at further lines
+            if line_amounts: break
             
         if line_amounts:
-            # If we are looking for total, usually it's the LARGEST on the line (Net + Tax = Gross)
             if field_type == 'total':
                 all_found_amounts.append(max(line_amounts))
+            elif field_type == 'tax':
+                # For tax in a summary row (Net, VAT, Gross), it's NEVER the largest one
+                if len(line_amounts) >= 2:
+                    s_vals = sorted(line_amounts)
+                    # Check if s_vals[0] + s_vals[1] approx equals s_vals[2]
+                    # Widened tolerance for OCR noise
+                    if len(s_vals) == 3 and abs((s_vals[0] + s_vals[1]) - s_vals[2]) < 5.0:
+                        all_found_amounts.append(s_vals[0]) # Smallest is tax
+                    else:
+                        # Fallback: pick the one that is NOT the max
+                        all_found_amounts.append(s_vals[0]) 
+                else:
+                    all_found_amounts.append(line_amounts[0])
             else:
                 all_found_amounts.append(line_amounts[0])
 
     if all_found_amounts:
-        return max(all_found_amounts) if field_type == 'total' else all_found_amounts[0]
+        if field_type == 'total':
+            return max(all_found_amounts)
+        else:
+            # For tax/subtotal, filter out candidates that are suspiciously large
+            # (e.g. Tax shouldn't be the largest number on the page)
+            # Find the global max on the page for comparison
+            global_max = 0
+            all_nums = re.findall(r'\d[\d\s.,]*[.,]\d{2}\b', text)
+            for n in all_nums:
+                try: 
+                    v = float(n.replace(' ', '').replace(',', '.'))
+                    if v > global_max: global_max = v
+                except: continue
+                
+            if field_type == 'tax':
+                # Filter candidates: Tax is almost always < 50% of total
+                valid_tax_candidates = [a for a in all_found_amounts if a < global_max * 0.5]
+                if valid_tax_candidates:
+                    return valid_tax_candidates[0]
+                return 0.0
+            
+            return all_found_amounts[0]
 
     # 2. Broad Fallback (Largest price-like number on page)
     if field_type == 'total':
@@ -360,6 +436,11 @@ def parse_invoice(raw_text):
     tax = extract_amount(raw_text, 'tax')
 
     # 3. Mathematical Sanity Checks (Keep subtotal/tax in background for math)
+    # Tax should not be the same as total (common OCR error)
+    if total > 0 and tax > total * 0.7:
+        # If tax is more than 70% of total, it's likely a misidentified total
+        tax = 0
+    
     if tax > total and total > 0: tax = 0
     if total > 0 and subtotal == 0: subtotal = total - tax
     if subtotal < 0: subtotal = total; tax = 0
@@ -375,7 +456,7 @@ def parse_invoice(raw_text):
 
     return {
         'invoice_number': inv_num,
-        'date': date,
+        'date': normalize_date(date),
         'product': product,
         'vendor': vendor,
         'tax_id': tax_id,

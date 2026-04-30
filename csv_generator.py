@@ -30,9 +30,10 @@ def generate_csv(invoice_records, export_dir='exports'):
     # Define CSV columns (Simplified as requested)
     fieldnames = [
         'Invoice ID',
-        'Date',
+        'Date (MM/DD/YYYY)           ', # Long header forces Excel to widen column
         'Product',
         'Amount',
+        'Tax / VAT',
         'Seller TaxID',
         'Buyer TaxID',
         'Vendor Name',
@@ -47,9 +48,10 @@ def generate_csv(invoice_records, export_dir='exports'):
             for record in invoice_records:
                 row = {
                     'Invoice ID': record.get('invoice_number', 'N/A'),
-                    'Date': record.get('date', 'N/A'),
+                    'Date (MM/DD/YYYY)           ': f" {record.get('date', 'N/A')}", # Leading space forces Excel to treat as text
                     'Product': record.get('product', 'N/A'),
                     'Amount': record.get('total', '0.00'),
+                    'Tax / VAT': record.get('tax', '0.00'),
                     'Seller TaxID': record.get('tax_id', 'N/A'),
                     'Buyer TaxID': record.get('buyer_id', 'N/A'),
                     'Vendor Name': record.get('vendor', 'Unknown'),
