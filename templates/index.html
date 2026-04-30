@@ -72,7 +72,38 @@
                     </div>
                 </div>
 
-                <!-- Table Section -->
+                <!-- Recent Activity Snippet -->
+                <div class="table-card" style="margin-top: 40px;">
+                    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Recent Invoices</h3>
+                        <a href="#" class="view-all-link" style="color: var(--accent-color); font-weight: 600; text-decoration: none; font-size: 0.9rem;" onclick="document.querySelector('[data-page=all-invoices]').click()">View All →</a>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Vendor</th>
+                                    <th>Category</th>
+                                    <th>Amount (₹)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-results-body">
+                                <!-- Last 3-5 records here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Invoices View -->
+            <div id="all-invoices-view" class="page-view">
+                <div class="page-title">
+                    <h2>All Invoices</h2>
+                    <p>Manage and export your full invoice history</p>
+                </div>
+
                 <div class="table-card">
                     <div class="table-header">
                         <h3>Extracted Invoices</h3>
@@ -91,7 +122,7 @@
                                 </tr>
                             </thead>
                             <tbody id="results-body">
-                                <!-- Data will be injected here -->
+                                <!-- Full data list here -->
                             </tbody>
                         </table>
                     </div>

@@ -22,6 +22,7 @@ const DOM = {
     processingSection: document.getElementById('processing-section'),
     processingStatus: document.getElementById('processing-status'),
     resultsBody: document.getElementById('results-body'),
+    recentResultsBody: document.getElementById('recent-results-body'),
     exportCsvBtn: document.getElementById('export-csv-btn'),
     navLinks: document.querySelectorAll('.header-nav-link'),
     pageViews: document.querySelectorAll('.page-view'),
@@ -145,6 +146,12 @@ async function processFiles(files) {
         renderResults();
         updateReports();
         showToast(`Processed ${successCount} file(s)`, 'success');
+        
+        // Auto-navigate to All Invoices after 1.5 seconds
+        setTimeout(() => {
+            const invoicesLink = document.querySelector('[data-page="all-invoices"]');
+            if (invoicesLink) invoicesLink.click();
+        }, 1500);
     }
 }
 
@@ -165,12 +172,24 @@ async function uploadAndProcess(file) {
 // Results Rendering
 // ========================
 function renderResults() {
+    // 1. Render Full Table
     DOM.resultsBody.innerHTML = '';
-
     state.results.forEach((record, index) => {
-        const row = document.createElement('tr');
-        const categoryClass = getCategoryBadgeClass(record.category);
-        
+        DOM.resultsBody.appendChild(createRow(record, index, true));
+    });
+
+    // 2. Render Recent Snippet (Last 5)
+    DOM.recentResultsBody.innerHTML = '';
+    state.results.slice(0, 5).forEach((record, index) => {
+        DOM.recentResultsBody.appendChild(createRow(record, index, false));
+    });
+}
+
+function createRow(record, index, isFull) {
+    const row = document.createElement('tr');
+    const categoryClass = getCategoryBadgeClass(record.category);
+    
+    if (isFull) {
         row.innerHTML = `
             <td>${escapeHtml(record.invoice_number || 'N/A')}</td>
             <td>${escapeHtml(record.date || 'N/A')}</td>
@@ -180,17 +199,22 @@ function renderResults() {
             <td><span class="badge badge-success">Processed</span></td>
             <td>
                 <div class="action-links">
-                    <span class="action-link" onclick="viewRawText(${index})" title="View Raw Text">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    </span>
                     <span class="action-link" onclick="deleteRow(${index})" title="Delete" style="color: #ef4444;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                     </span>
                 </div>
             </td>
         `;
-        DOM.resultsBody.appendChild(row);
-    });
+    } else {
+        row.innerHTML = `
+            <td>${escapeHtml(record.invoice_number || 'N/A')}</td>
+            <td>${escapeHtml(record.vendor || 'Unknown')}</td>
+            <td>${escapeHtml(record.category || 'Other')}</td>
+            <td>${parseFloat(record.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            <td><span class="badge badge-success">Processed</span></td>
+        `;
+    }
+    return row;
 }
 
 function getCategoryBadgeClass(cat) {
