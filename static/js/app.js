@@ -210,39 +210,105 @@ function getCategoryBadgeClass(cat) {
 // Reports & Charts
 // ========================
 function initCharts() {
+    // Set global defaults for larger visibility
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 14;
+    Chart.defaults.color = '#475569';
+    Chart.defaults.plugins.legend.labels.padding = 20;
+
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { position: 'bottom' }
+            legend: { 
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 25,
+                    font: { size: 14, weight: '600' }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                padding: 16,
+                titleFont: { size: 16, weight: '700' },
+                bodyFont: { size: 14 },
+                cornerRadius: 10,
+                displayColors: true
+            }
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: { 
+                beginAtZero: true,
+                grid: { color: 'rgba(226, 232, 240, 0.5)' }
+            }
         }
     };
 
     // Category Chart
     state.charts.category = new Chart(document.getElementById('chart-category'), {
         type: 'doughnut',
-        data: { labels: [], datasets: [{ data: [], backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'] }] },
-        options: chartOptions
+        data: { labels: [], datasets: [{ 
+            data: [], 
+            backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'],
+            borderWidth: 0,
+            hoverOffset: 20
+        }] },
+        options: {
+            ...chartOptions,
+            cutout: '65%',
+            plugins: {
+                ...chartOptions.plugins,
+                legend: { ...chartOptions.plugins.legend, position: 'right' }
+            }
+        }
     });
 
     // Trend Chart
-    state.charts.trend = new Chart(document.getElementById('chart-trend'), {
+    const trendCtx = document.getElementById('chart-trend').getContext('2d');
+    const trendGradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+    trendGradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+    trendGradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    state.charts.trend = new Chart(trendCtx, {
         type: 'line',
-        data: { labels: [], datasets: [{ label: 'Spending (₹)', data: [], borderColor: '#6366f1', tension: 0.4, fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)' }] },
+        data: { labels: [], datasets: [{ 
+            label: 'Spending (₹)', 
+            data: [], 
+            borderColor: '#6366f1', 
+            borderWidth: 4,
+            pointBackgroundColor: '#6366f1',
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            tension: 0.4, 
+            fill: true, 
+            backgroundColor: trendGradient 
+        }] },
         options: chartOptions
     });
 
     // Vendors Chart
     state.charts.vendors = new Chart(document.getElementById('chart-vendors'), {
         type: 'bar',
-        data: { labels: [], datasets: [{ label: 'Total Sales (₹)', data: [], backgroundColor: '#6366f1' }] },
+        data: { labels: [], datasets: [{ 
+            label: 'Total Sales (₹)', 
+            data: [], 
+            backgroundColor: '#6366f1',
+            borderRadius: 10,
+            barThickness: 30
+        }] },
         options: { ...chartOptions, indexAxis: 'y' }
     });
 
     // Distribution Chart
     state.charts.distribution = new Chart(document.getElementById('chart-distribution'), {
         type: 'pie',
-        data: { labels: ['Processed', 'Pending'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#f59e0b'] }] },
+        data: { labels: ['Processed', 'Pending'], datasets: [{ 
+            data: [0, 0], 
+            backgroundColor: ['#10b981', '#f59e0b'],
+            borderWidth: 0
+        }] },
         options: chartOptions
     });
 }
