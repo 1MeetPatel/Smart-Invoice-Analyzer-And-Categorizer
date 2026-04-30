@@ -403,6 +403,43 @@ body {
 .badge-pink { background: #fdf2f8; color: #db2777; border: 1px solid #fce7f3; }
 .badge-success { background: #f0fdf4; color: #10b981; border: 1px solid #dcfce7; }
 
+/* Category Tags in Table */
+.category-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+
+.tag-utilities { background: #fffbeb; color: #d97706; border: 1px solid #fef3c7; }
+.tag-software-&-it, .tag-it-&-software { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+.tag-office-supplies { background: #f5f3ff; color: #6366f1; border: 1px solid #e0e7ff; }
+.tag-travel-&-transport, .tag-travel { background: #fdf2f8; color: #db2777; border: 1px solid #fce7f3; }
+.tag-food-&-dining { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+.tag-professional-services { background: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; }
+.tag-marketing-&-advertising, .tag-marketing { background: #fdf2f8; color: #db2777; border: 1px solid #fce7f3; }
+.tag-other { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-processed { background: #f0fdf4; color: #10b981; }
+
 .action-link {
     display: inline-flex;
     padding: 8px;

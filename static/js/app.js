@@ -189,15 +189,15 @@ function renderResults() {
 
 function createRow(record, index) {
     const row = document.createElement('tr');
-    const categoryClass = getCategoryBadgeClass(record.category);
+    const catClass = (record.category || 'other').toLowerCase().replace(/[^a-z0-9]+/g, '-');
     
     row.innerHTML = `
         <td>${escapeHtml(record.invoice_number || 'N/A')}</td>
         <td>${escapeHtml(record.date || 'N/A')}</td>
         <td>${escapeHtml(record.vendor || 'Unknown')}</td>
-        <td><span class="badge ${categoryClass}">${escapeHtml(record.category || 'Other')}</span></td>
+        <td><span class="category-tag tag-${catClass}">${escapeHtml(record.category || 'Other')}</span></td>
         <td>${parseFloat(record.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-        <td><span class="badge badge-success">Processed</span></td>
+        <td><span class="status-badge badge-processed">Processed</span></td>
         <td>
             <div class="action-links">
                 <span class="action-link" onclick="deleteRow(${index})" title="Delete" style="color: #ef4444;">
