@@ -184,18 +184,71 @@
                             <!-- Audit Section -->
                             <div id="audit-flag-card" class="card" style="padding: 24px; background: #fff1f2; border: 1px solid #fecaca; display: none;">
                                 <div style="display: flex; gap: 12px; color: #be123c;">
-                                    <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; margin-top: 4px;"></i>
-                                    <div>
-                                        <h4 style="font-weight: 800; margin-bottom: 4px;">Review Required</h4>
-                                        <p style="font-size: 0.85rem; line-height: 1.4;">We found mathematical inconsistencies in some invoices. Please verify the <b>Total Amount</b> on your latest uploads.</p>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- Tier 1: Hero Metrics -->
+                    <div class="hero-stats-row">
+                        <div class="hero-stat-card">
+                            <span class="hero-stat-label">GROSS SPEND</span>
+                            <h2 id="pulse-total">₹0</h2>
+                            <p id="pulse-count" class="hero-stat-sub">Across 0 invoices</p>
+                        </div>
+                        <div class="hero-stat-card">
+                            <span class="hero-stat-label">TAX BURDEN</span>
+                            <h2 id="pulse-tax">₹0</h2>
+                            <p id="pulse-tax-pct" class="hero-stat-sub">0% of total</p>
+                        </div>
+                        <div class="hero-stat-card">
+                            <span class="hero-stat-label">AVG INVOICE</span>
+                            <h2 id="pulse-avg">₹0</h2>
+                            <p class="hero-stat-sub">Per transaction</p>
+                        </div>
+                    </div>
 
-                            <!-- Category Donut -->
-                            <div class="card" style="padding: 24px; background: white;">
-                                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 20px;">Category Mix</h3>
-                                <div style="height: 200px;"><canvas id="fresh-chart-category"></canvas></div>
+                    <!-- Tier 2: The Timeline -->
+                    <div class="chart-main-row">
+                        <div class="chart-card-fresh">
+                            <div class="chart-card-header">
+                                <h3>Spending Pulse</h3>
+                                <p>Tracking your financial trends over time</p>
+                            </div>
+                            <div class="chart-container-fresh">
+                                <canvas id="fresh-chart-trend"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tier 3: Deep Insights -->
+                    <div class="insights-grid-fresh">
+                        <!-- Category Mix -->
+                        <div class="insight-card-small">
+                            <div class="chart-card-header">
+                                <h3>Category Mix</h3>
+                            </div>
+                            <div class="donut-container-fresh">
+                                <canvas id="fresh-chart-category"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Top Partners -->
+                        <div class="insight-card-small">
+                            <div class="chart-card-header">
+                                <h3>Top Partners</h3>
+                            </div>
+                            <div id="top-vendors-list" class="top-list-fresh">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Audit & Accuracy -->
+                        <div class="insight-card-small audit-focus">
+                            <div class="chart-card-header">
+                                <h3>System Health</h3>
+                            </div>
+                            <div class="health-metric">
+                                <div class="health-label">OCR Confidence</div>
+                                <div id="pulse-confidence" class="health-value">0%</div>
+                            </div>
+                            <div id="audit-flag-card" class="audit-banner-fresh" style="display: none;">
+                                ⚠️ <strong>Attention:</strong> Some invoices failed math verification. Manual audit recommended.
                             </div>
                         </div>
                     </div>

@@ -327,11 +327,22 @@ function updateReports() {
     DOM.pulseCount.textContent = `Across ${state.results.length} invoices`;
     DOM.pulseConfidence.textContent = `${avgConf}%`;
 
-    // 3. Top Partner
-    const topVendor = Object.entries(vendorMap).sort((a,b) => b[1].amt - a[1].amt)[0];
-    if (topVendor) {
-        DOM.topPartnerName.textContent = topVendor[0];
-        DOM.topPartnerStats.textContent = `${topVendor[1].count} invoices • ₹${topVendor[1].amt.toLocaleString()}`;
+    // 3. Top Partners List (New Deep Insight)
+    const topVendors = Object.entries(vendorMap)
+        .sort((a,b) => b[1].amt - a[1].amt)
+        .slice(0, 5);
+    
+    const topVendorsList = document.getElementById('top-vendors-list');
+    if (topVendorsList) {
+        topVendorsList.innerHTML = topVendors.map(([name, stats]) => `
+            <div class="top-item-fresh">
+                <div class="top-item-info">
+                    <span>${name}</span>
+                    <small>${stats.count} Invoices</small>
+                </div>
+                <div class="top-item-amt">₹${stats.amt.toLocaleString()}</div>
+            </div>
+        `).join('') || '<p style="text-align:center; color:var(--text-muted);">No partners detected yet.</p>';
     }
 
     // 4. Audit Flag
