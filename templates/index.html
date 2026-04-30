@@ -122,109 +122,58 @@
                 <div id="reports-active-content" style="display: none;">
                     <div class="reports-dashboard">
                         <div class="reports-header-title">
-                            <h2>Reports Overview</h2>
+                            <h2>Financial Analytics Dashboard</h2>
+                            <p>Real-time insights extracted from your invoice history</p>
                         </div>
 
                         <!-- Top row metrics -->
                         <div class="metrics-grid">
                             <div class="metric-card">
-                                <div class="metric-header">
-                                    <span class="metric-label">Total Spend</span>
-                                    <span class="trend-pill positive">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                                        4.2%
-                                    </span>
-                                </div>
-                                <div class="metric-value" id="pulse-total">$25,482.10</div>
+                                <div class="metric-label">Total Expenditure</div>
+                                <div class="metric-value" id="pulse-total">₹ 0.00</div>
+                                <div class="metric-footer" id="total-count-label">Across 0 invoices</div>
                             </div>
-
                             <div class="metric-card">
-                                <div class="metric-header">
-                                    <span class="metric-label">Tax Amount</span>
-                                    <span class="trend-pill positive">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                                        3.1%
-                                    </span>
-                                </div>
-                                <div class="metric-value" id="pulse-tax">$3,822.31</div>
+                                <div class="metric-label">Total Tax / VAT</div>
+                                <div class="metric-value" id="pulse-tax">₹ 0.00</div>
+                                <div class="metric-footer">Extracted Tax Amount</div>
                             </div>
-
                             <div class="metric-card">
-                                <div class="metric-header">
-                                    <span class="metric-label">Confidence Score</span>
-                                    <span class="trend-pill negative">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                        0.5%
-                                    </span>
-                                </div>
-                                <div class="metric-value"><span id="pulse-confidence">94</span>%</div>
+                                <div class="metric-label">Average Invoice</div>
+                                <div class="metric-value" id="pulse-avg">₹ 0.00</div>
+                                <div class="metric-footer">Per transaction</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Data Compliance</div>
+                                <div class="metric-value"><span id="pulse-confidence">0</span>%</div>
+                                <div class="metric-footer">ID Extraction Rate</div>
                             </div>
                         </div>
 
-                        <!-- Main Dashboard Row -->
-                        <div class="dashboard-main-row">
-                            <!-- Left: Timeline Chart -->
-                            <div class="chart-card large">
-                                <h3 class="card-section-title">Monthly Spending Trends</h3>
-                                <div class="chart-wrapper">
-                                    <canvas id="fresh-chart-trend"></canvas>
-                                </div>
-                                <div class="chart-x-labels">
-                                    <span>Jan</span>
-                                    <span>Feb</span>
-                                    <span>Mar</span>
-                                    <span>Apr</span>
-                                    <span>May</span>
-                                    <span>June</span>
+                        <!-- Chart Grid -->
+                        <div class="charts-grid-layout">
+                            <div class="chart-card-box span-2">
+                                <h3 class="chart-box-title">Expenditure Flow</h3>
+                                <div class="chart-canvas-wrapper">
+                                    <canvas id="chart-spending-trend"></canvas>
                                 </div>
                             </div>
-
-                            <!-- Right Side Column -->
-                            <div class="dashboard-side-column">
-                                <!-- Top Vendors Bar Chart -->
-                                <div class="chart-card">
-                                    <h3 class="card-section-title">Top Vendors by Spend</h3>
-                                    <div class="chart-wrapper small">
-                                        <canvas id="fresh-chart-vendors"></canvas>
-                                    </div>
+                            <div class="chart-card-box">
+                                <h3 class="chart-box-title">Category Split</h3>
+                                <div class="chart-canvas-wrapper">
+                                    <canvas id="chart-category-donut"></canvas>
                                 </div>
-
-                                <!-- Category Distribution -->
-                                <div class="chart-card">
-                                    <h3 class="card-section-title">Category Distribution</h3>
-                                    <div class="donut-container">
-                                        <div class="donut-center">
-                                            <span class="donut-total" id="donut-center-total">$25,482</span>
-                                        </div>
-                                        <canvas id="fresh-chart-category"></canvas>
-                                    </div>
-                                    <div id="category-legend" class="category-legend">
-                                        <!-- Legend populated via JS -->
-                                    </div>
+                            </div>
+                            <div class="chart-card-box">
+                                <h3 class="chart-box-title">Tax Efficiency</h3>
+                                <div class="chart-canvas-wrapper">
+                                    <canvas id="chart-tax-efficiency"></canvas>
                                 </div>
-
-                                <!-- Tax vs Net Comparison -->
-                                <div class="chart-card">
-                                    <h3 class="card-section-title">Tax Efficiency</h3>
-                                    <div class="tax-ratio-container">
-                                        <div class="tax-ratio-header">
-                                            <div class="ratio-item">
-                                                <span class="ratio-dot net"></span>
-                                                <span class="ratio-label">Net</span>
-                                            </div>
-                                            <div class="ratio-item">
-                                                <span class="ratio-dot tax"></span>
-                                                <span class="ratio-label">Tax</span>
-                                            </div>
-                                        </div>
-                                        <div class="ratio-bar-wrapper">
-                                            <div id="ratio-bar-net" class="ratio-segment net" style="width: 85%;"></div>
-                                            <div id="ratio-bar-tax" class="ratio-segment tax" style="width: 15%;"></div>
-                                        </div>
-                                        <div class="ratio-footer">
-                                            <span id="tax-efficiency-text">Tax represents 15% of your total spend</span>
-                                        </div>
-                                    </div>
+                            </div>
+                            <div class="chart-card-box span-2">
+                                <h3 class="chart-box-title">Top Vendors by Spend</h3>
+                                <div class="chart-canvas-wrapper">
+                                    <canvas id="chart-vendor-bars"></canvas>
                                 </div>
                             </div>
                         </div>

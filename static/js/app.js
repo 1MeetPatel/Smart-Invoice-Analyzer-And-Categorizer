@@ -227,124 +227,109 @@ function getCategoryBadgeClass(cat) {
 // Reports & Charts
 // ========================
 // ========================
-// Reports & Charts
-// ========================
 function initCharts() {
-    Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.font.size = 12;
-    Chart.defaults.color = '#64748b';
-
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
-            tooltip: { 
-                backgroundColor: '#1e293b', 
-                padding: 12, 
-                cornerRadius: 8,
-                titleFont: { size: 14, weight: 'bold' },
-                bodyFont: { size: 13 },
+            tooltip: {
+                backgroundColor: '#1e293b',
+                titleColor: '#f8fafc',
+                bodyColor: '#94a3b8',
+                borderColor: '#334155',
+                borderWidth: 1,
+                padding: 12,
                 displayColors: false
             }
-        },
-        scales: {
-            x: { display: false },
-            y: { display: false }
         }
     };
 
-    // 1. Smooth Timeline Chart
-    const trendCtx = document.getElementById('fresh-chart-trend').getContext('2d');
-    const grad = trendCtx.createLinearGradient(0, 0, 0, 300);
-    grad.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
-    grad.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
-
-    state.charts.trend = new Chart(trendCtx, {
+    // 1. Expenditure Trend Chart (Area Chart)
+    state.charts.trend = new Chart(document.getElementById('chart-spending-trend'), {
         type: 'line',
-        data: { 
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June'], 
-            datasets: [{ 
-                label: 'Spending', 
-                data: [], 
-                borderColor: '#6366f1', 
-                borderWidth: 4, 
-                fill: true, 
-                backgroundColor: grad, 
-                tension: 0.5, 
-                pointRadius: 0,
-                pointHoverRadius: 6,
-                pointHoverBackgroundColor: '#6366f1',
-                pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 3
-            }] 
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Expenditure',
+                data: [0, 0, 0, 0, 0, 0],
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#6366f1'
+            }]
         },
         options: {
             ...commonOptions,
-            plugins: {
-                ...commonOptions.plugins,
-                tooltip: {
-                    ...commonOptions.plugins.tooltip,
-                    callbacks: {
-                        label: (context) => `$${context.parsed.y.toLocaleString()}`
-                    }
-                }
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
             }
         }
     });
 
     // 2. Category Donut Chart
-    state.charts.category = new Chart(document.getElementById('fresh-chart-category'), {
+    state.charts.category = new Chart(document.getElementById('chart-category-donut'), {
         type: 'doughnut',
-        data: { 
-            labels: [], 
-            datasets: [{ 
-                data: [], 
-                backgroundColor: ['#6366f1', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'], 
-                borderWidth: 6,
-                borderColor: '#ffffff',
-                hoverOffset: 4,
-                cutout: '80%' 
-            }] 
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: ['#6366f1', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 15
+            }]
         },
-        options: { 
+        options: {
             ...commonOptions,
+            cutout: '70%',
             plugins: {
-                legend: { display: false },
-                tooltip: {
-                    ...commonOptions.plugins.tooltip,
-                    callbacks: {
-                        label: (context) => `${context.label}: ${context.parsed}%`
-                    }
-                }
+                ...commonOptions.plugins,
+                legend: { display: true, position: 'bottom', labels: { color: '#94a3b8', usePointStyle: true, padding: 20 } }
             }
         }
     });
 
-    // 3. Top Vendors Bar Chart (Horizontal)
-    state.charts.vendors = new Chart(document.getElementById('fresh-chart-vendors'), {
+    // 3. Tax Efficiency (Stacked Bar Chart)
+    state.charts.tax = new Chart(document.getElementById('chart-tax-efficiency'), {
+        type: 'bar',
+        data: {
+            labels: ['Net Amount', 'Tax Amount'],
+            datasets: [{
+                data: [0, 0],
+                backgroundColor: ['#6366f1', '#ef4444'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                y: { display: false },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            }
+        }
+    });
+
+    // 4. Top Vendors Horizontal Bar Chart
+    state.charts.vendors = new Chart(document.getElementById('chart-vendor-bars'), {
         type: 'bar',
         data: {
             labels: [],
             datasets: [{
-                label: 'Spend',
+                label: 'Total Spend',
                 data: [],
-                backgroundColor: '#6366f1',
-                borderRadius: 4,
-                barThickness: 12
+                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                borderRadius: 4
             }]
         },
         options: {
+            ...commonOptions,
             indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
             scales: {
-                x: { display: false },
-                y: {
-                    grid: { display: false, drawBorder: false },
-                    ticks: { color: '#64748b', font: { weight: 'bold' } }
-                }
+                x: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                y: { grid: { display: false }, ticks: { color: '#94a3b8' } }
             }
         }
     });
@@ -366,10 +351,8 @@ function updateReports() {
     let totalConf = 0;
     const catMap = {};
     const vendorMap = {};
+    const monthlySpend = Array(6).fill(0); // Jan to Jun
     
-    // Mocked trend data for visual fidelity as per image
-    const monthlyData = [4200, 5800, 4900, 6200, 7800, 6500]; // Example distribution
-
     state.results.forEach(r => {
         const amt = parseAmount(r.total);
         const tax = parseAmount(r.tax);
@@ -386,19 +369,44 @@ function updateReports() {
         vendorMap[vend] = (vendorMap[vend] || { amt: 0, count: 0 });
         vendorMap[vend].amt += amt;
         vendorMap[vend].count += 1;
+
+        // Extract month for trend
+        if (r.date) {
+            const dateParts = r.date.split('/');
+            if (dateParts.length >= 2) {
+                const monthIdx = parseInt(dateParts[0]) - 1; // Assume MM/DD/YYYY
+                if (monthIdx >= 0 && monthIdx < 6) monthlySpend[monthIdx] += amt;
+            }
+        }
     });
 
     const avgConf = ((totalConf / state.results.length) * 100).toFixed(0);
+    const avgInvoice = state.results.length > 0 ? (totalSpend / state.results.length) : 0;
 
     // 2. Hero UI
-    DOM.pulseTotal.textContent = `$${totalSpend.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-    DOM.pulseTax.textContent = `$${totalTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    DOM.pulseTotal.textContent = `₹ ${totalSpend.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    DOM.pulseTax.textContent = `₹ ${totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    document.getElementById('pulse-avg').textContent = `₹ ${avgInvoice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     DOM.pulseConfidence.textContent = avgConf;
-    
-    const centerTotal = document.getElementById('donut-center-total');
-    if (centerTotal) centerTotal.textContent = `$${Math.round(totalSpend).toLocaleString()}`;
+    document.getElementById('total-count-label').textContent = `Across ${state.results.length} invoices`;
 
-    // 3. Top Vendors
+    // 3. Update Charts
+    // Spending Trend
+    state.charts.trend.data.datasets[0].data = monthlySpend;
+    state.charts.trend.update();
+
+    // Category Donut
+    const catLabels = Object.keys(catMap);
+    const catVals = catLabels.map(l => catMap[l]);
+    state.charts.category.data.labels = catLabels;
+    state.charts.category.data.datasets[0].data = catVals;
+    state.charts.category.update();
+
+    // Tax Efficiency
+    state.charts.tax.data.datasets[0].data = [totalSpend - totalTax, totalTax];
+    state.charts.tax.update();
+
+    // Top Vendors
     const topVendors = Object.entries(vendorMap)
         .sort((a,b) => b[1].amt - a[1].amt)
         .slice(0, 5);
@@ -406,47 +414,6 @@ function updateReports() {
     state.charts.vendors.data.labels = topVendors.map(v => v[0]);
     state.charts.vendors.data.datasets[0].data = topVendors.map(v => v[1].amt);
     state.charts.vendors.update();
-
-    // 4. Tax Efficiency
-    const netSpend = totalSpend - totalTax;
-    const taxPct = totalSpend > 0 ? Math.round((totalTax / totalSpend) * 100) : 0;
-    
-    const barNet = document.getElementById('ratio-bar-net');
-    const barTax = document.getElementById('ratio-bar-tax');
-    const taxText = document.getElementById('tax-efficiency-text');
-    
-    if (barNet && barTax && taxText) {
-        barNet.style.width = `${100 - taxPct}%`;
-        barTax.style.width = `${taxPct}%`;
-        taxText.textContent = `Tax represents ${taxPct}% of your total spend ($${totalTax.toLocaleString()})`;
-    }
-
-    // 5. Category Legend & Chart
-    const legendEl = document.getElementById('category-legend');
-    if (legendEl) {
-        const sortedCats = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
-        legendEl.innerHTML = sortedCats.map(([cat, amt]) => {
-            const pct = Math.round((amt / totalSpend) * 100);
-            return `
-                <div class="legend-item">
-                    <div class="legend-info">
-                        <span class="legend-label">${cat}</span>
-                        <span class="legend-pct">${pct}%</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // 6. Update Timeline & Categories
-    state.charts.trend.data.datasets[0].data = monthlyData; 
-    state.charts.trend.update();
-
-    const catLabels = Object.keys(catMap);
-    const catPcts = catLabels.map(l => Math.round((catMap[l] / totalSpend) * 100));
-    state.charts.category.data.labels = catLabels;
-    state.charts.category.data.datasets[0].data = catPcts;
-    state.charts.category.update();
 }
 
 function parseAmount(amt) {

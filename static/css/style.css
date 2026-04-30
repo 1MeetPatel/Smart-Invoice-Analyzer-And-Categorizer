@@ -711,66 +711,102 @@ body {
     margin-bottom: 24px;
 }
 
-@media (max-width: 1100px) {
-    .metrics-grid, .dashboard-main-row {
-        grid-template-columns: 1fr;
-    }
-}
-/* Tax Efficiency Visualization */
-.tax-ratio-container {
-    padding: 10px 0;
+/* --- Chart-First Reports Grid --- */
+.charts-grid-layout {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 32px;
 }
 
-.tax-ratio-header {
+.chart-card-box {
+    background: white;
+    padding: 32px;
+    border-radius: 20px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.03);
     display: flex;
-    gap: 16px;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+}
+
+.chart-card-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card-box.span-2 {
+    grid-column: span 2;
+}
+
+.chart-box-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-canvas-wrapper {
+    position: relative;
+    flex-grow: 1;
+    min-height: 350px;
+}
+
+/* Metric Enhancements */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 32px;
+    border-radius: 20px;
+    border: 1px solid white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: 12px;
 }
 
-.ratio-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.metric-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    margin-bottom: 8px;
 }
 
-.ratio-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-}
-
-.ratio-dot.net { background: #6366f1; }
-.ratio-dot.tax { background: #f59e0b; }
-
-.ratio-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-
-.ratio-bar-wrapper {
-    height: 24px;
-    background: #f1f5f9;
-    border-radius: 99px;
-    overflow: hidden;
-    display: flex;
-    margin-bottom: 16px;
-}
-
-.ratio-segment {
-    height: 100%;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.ratio-segment.net { background: #6366f1; }
-.ratio-segment.tax { background: #f59e0b; }
-
-.ratio-footer {
+.metric-footer {
     font-size: 0.85rem;
     color: var(--text-muted);
     font-weight: 500;
 }
 
-.chart-wrapper.small {
-    height: 200px;
+@media (max-width: 1200px) {
+    .charts-grid-layout {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .chart-card-box.span-2 {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .charts-grid-layout, .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-card-box.span-2 {
+        grid-column: span 1;
+    }
 }
