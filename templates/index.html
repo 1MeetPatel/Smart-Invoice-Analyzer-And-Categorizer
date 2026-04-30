@@ -89,11 +89,13 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Invoice #</th>
+                                    <th>Invoice ID</th>
                                     <th>Date</th>
-                                    <th>Vendor</th>
-                                    <th>Category</th>
-                                    <th>Amount (₹)</th>
+                                    <th>Product / Service</th>
+                                    <th>Amount</th>
+                                    <th>Tax / VAT</th>
+                                    <th>Seller TaxID</th>
+                                    <th>Buyer / Client TaxID</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -108,147 +110,122 @@
 
             <!-- Reports View -->
             <div id="reports-view" class="page-view">
-                <!-- Empty State (Shown when no invoices) -->
-                <div id="reports-empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center;">
-                    <div style="font-size: 5rem; margin-bottom: 24px; opacity: 0.5;"><i class="fas fa-chart-pie"></i></div>
-                    <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-primary);">Awaiting Data</h2>
-                    <p style="color: var(--text-secondary); max-width: 400px; line-height: 1.6; margin-top: 12px;">
-                        Upload your first invoice in the <b>Dashboard</b> to unlock real-time financial insights and automated analytics.
-                    </p>
-                    <button class="btn-csv" onclick="showPage('dashboard')" style="margin-top: 32px; background: var(--accent-color); color: white; border: none;">Go to Dashboard</button>
+                <!-- Empty State -->
+                <div id="reports-empty-state" class="reports-empty">
+                    <div class="empty-icon">📊</div>
+                    <h2>Awaiting Financial Data</h2>
+                    <p>Upload invoices in the Dashboard to generate real-time spending insights and visual reports.</p>
+                    <button class="btn-choose" onclick="showPage('dashboard')" style="margin-top: 24px;">Go to Dashboard</button>
                 </div>
 
-                <!-- Active Report State (Hidden by default) -->
+                <!-- Active Report State -->
                 <div id="reports-active-content" style="display: none;">
-                    <div class="reports-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
-                        <div class="page-title" style="margin-bottom: 0;">
-                            <h2 style="font-size: 2.2rem; font-weight: 800; letter-spacing: -1px;">Financial Intelligence</h2>
-                            <p style="color: var(--text-secondary); font-size: 1.1rem;">Dynamic insights generated from your uploaded data</p>
+                    <div class="reports-dashboard">
+                        <div class="reports-header-title">
+                            <h2>Reports Overview</h2>
                         </div>
-                        <div style="display: flex; gap: 12px;">
-                            <button class="btn-csv" style="padding: 8px 16px; border-color: #e2e8f0; color: #64748b;"><i class="fas fa-calendar-alt"></i> Last 30 Days</button>
-                            <button class="btn-csv" style="padding: 8px 16px; background: var(--accent-color); color: white; border: none;"><i class="fas fa-file-export"></i> PDF Summary</button>
-                        </div>
-                    </div>
 
-                    <!-- Pulse Metrics -->
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 40px;">
-                        <div class="card" style="padding: 24px; background: white;">
-                            <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Gross Spend</p>
-                            <h3 id="pulse-total" style="font-size: 2rem; font-weight: 800; margin: 8px 0;">₹0</h3>
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #10b981;">
-                                <i class="fas fa-arrow-up"></i> <span>Pulse Active</span>
+                        <!-- Top row metrics -->
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-header">
+                                    <span class="metric-label">Total Spend</span>
+                                    <span class="trend-pill positive">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                        4.2%
+                                    </span>
+                                </div>
+                                <div class="metric-value" id="pulse-total">$25,482.10</div>
+                            </div>
+
+                            <div class="metric-card">
+                                <div class="metric-header">
+                                    <span class="metric-label">Tax Amount</span>
+                                    <span class="trend-pill positive">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                        3.1%
+                                    </span>
+                                </div>
+                                <div class="metric-value" id="pulse-tax">$3,822.31</div>
+                            </div>
+
+                            <div class="metric-card">
+                                <div class="metric-header">
+                                    <span class="metric-label">Confidence Score</span>
+                                    <span class="trend-pill negative">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                        0.5%
+                                    </span>
+                                </div>
+                                <div class="metric-value"><span id="pulse-confidence">94</span>%</div>
                             </div>
                         </div>
-                        <div class="card" style="padding: 24px; background: white;">
-                            <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Tax Burden</p>
-                            <h3 id="pulse-tax" style="font-size: 2rem; font-weight: 800; margin: 8px 0;">₹0</h3>
-                            <p id="pulse-tax-pct" style="color: var(--text-secondary); font-size: 0.85rem;">0% of total spend</p>
-                        </div>
-                        <div class="card" style="padding: 24px; background: white;">
-                            <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Avg. Value</p>
-                            <h3 id="pulse-avg" style="font-size: 2rem; font-weight: 800; margin: 8px 0;">₹0</h3>
-                            <p id="pulse-count" style="color: var(--text-secondary); font-size: 0.85rem;">Across 0 invoices</p>
-                        </div>
-                        <div class="card" style="padding: 24px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white;">
-                            <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">OCR Confidence</p>
-                            <h3 id="pulse-confidence" style="font-size: 2rem; font-weight: 800; margin: 8px 0;">0%</h3>
-                            <p style="color: rgba(255,255,255,0.9); font-size: 0.85rem;"><i class="fas fa-shield-check"></i> Math verified</p>
-                        </div>
-                    </div>
 
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px;">
-                        <!-- Primary Chart -->
-                        <div class="card" style="padding: 32px; background: white;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                                <h3 style="font-weight: 800;">Spending Pulse (Timeline)</h3>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Daily Activity</div>
-                            </div>
-                            <div style="height: 350px;"><canvas id="fresh-chart-trend"></canvas></div>
-                        </div>
-
-                        <!-- Side Column -->
-                        <div style="display: flex; flex-direction: column; gap: 32px;">
-                            <!-- Top Partner -->
-                            <div class="card" style="padding: 24px; background: white;">
-                                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 20px;">Top Partner</h3>
-                                <div id="top-partner-card" style="display: flex; align-items: center; gap: 16px;">
-                                    <div style="width: 56px; height: 56px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--accent-color);"><i class="fas fa-building"></i></div>
-                                    <div>
-                                        <h4 id="top-partner-name" style="font-size: 1.2rem; font-weight: 700;">---</h4>
-                                        <p id="top-partner-stats" style="color: var(--text-secondary); font-size: 0.85rem;">0 invoices • ₹0</p>
-                                    </div>
+                        <!-- Main Dashboard Row -->
+                        <div class="dashboard-main-row">
+                            <!-- Left: Timeline Chart -->
+                            <div class="chart-card large">
+                                <h3 class="card-section-title">Monthly Spending Trends</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="fresh-chart-trend"></canvas>
+                                </div>
+                                <div class="chart-x-labels">
+                                    <span>Jan</span>
+                                    <span>Feb</span>
+                                    <span>Mar</span>
+                                    <span>Apr</span>
+                                    <span>May</span>
+                                    <span>June</span>
                                 </div>
                             </div>
 
-                            <!-- Audit Section -->
-                            <div id="audit-flag-card" class="card" style="padding: 24px; background: #fff1f2; border: 1px solid #fecaca; display: none;">
-                                <div style="display: flex; gap: 12px; color: #be123c;">
-                    <!-- Tier 1: Hero Metrics -->
-                    <div class="hero-stats-row">
-                        <div class="hero-stat-card">
-                            <span class="hero-stat-label">GROSS SPEND</span>
-                            <h2 id="pulse-total">₹0</h2>
-                            <p id="pulse-count" class="hero-stat-sub">Across 0 invoices</p>
-                        </div>
-                        <div class="hero-stat-card">
-                            <span class="hero-stat-label">TAX BURDEN</span>
-                            <h2 id="pulse-tax">₹0</h2>
-                            <p id="pulse-tax-pct" class="hero-stat-sub">0% of total</p>
-                        </div>
-                        <div class="hero-stat-card">
-                            <span class="hero-stat-label">AVG INVOICE</span>
-                            <h2 id="pulse-avg">₹0</h2>
-                            <p class="hero-stat-sub">Per transaction</p>
-                        </div>
-                    </div>
+                            <!-- Right Side Column -->
+                            <div class="dashboard-side-column">
+                                <!-- Top Vendors Bar Chart -->
+                                <div class="chart-card">
+                                    <h3 class="card-section-title">Top Vendors by Spend</h3>
+                                    <div class="chart-wrapper small">
+                                        <canvas id="fresh-chart-vendors"></canvas>
+                                    </div>
+                                </div>
 
-                    <!-- Tier 2: The Timeline -->
-                    <div class="chart-main-row">
-                        <div class="chart-card-fresh">
-                            <div class="chart-card-header">
-                                <h3>Spending Pulse</h3>
-                                <p>Tracking your financial trends over time</p>
-                            </div>
-                            <div class="chart-container-fresh">
-                                <canvas id="fresh-chart-trend"></canvas>
-                            </div>
-                        </div>
-                    </div>
+                                <!-- Category Distribution -->
+                                <div class="chart-card">
+                                    <h3 class="card-section-title">Category Distribution</h3>
+                                    <div class="donut-container">
+                                        <div class="donut-center">
+                                            <span class="donut-total" id="donut-center-total">$25,482</span>
+                                        </div>
+                                        <canvas id="fresh-chart-category"></canvas>
+                                    </div>
+                                    <div id="category-legend" class="category-legend">
+                                        <!-- Legend populated via JS -->
+                                    </div>
+                                </div>
 
-                    <!-- Tier 3: Deep Insights -->
-                    <div class="insights-grid-fresh">
-                        <!-- Category Mix -->
-                        <div class="insight-card-small">
-                            <div class="chart-card-header">
-                                <h3>Category Mix</h3>
-                            </div>
-                            <div class="donut-container-fresh">
-                                <canvas id="fresh-chart-category"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Top Partners -->
-                        <div class="insight-card-small">
-                            <div class="chart-card-header">
-                                <h3>Top Partners</h3>
-                            </div>
-                            <div id="top-vendors-list" class="top-list-fresh">
-                                <!-- Populated via JS -->
-                            </div>
-                        </div>
-
-                        <!-- Audit & Accuracy -->
-                        <div class="insight-card-small audit-focus">
-                            <div class="chart-card-header">
-                                <h3>System Health</h3>
-                            </div>
-                            <div class="health-metric">
-                                <div class="health-label">OCR Confidence</div>
-                                <div id="pulse-confidence" class="health-value">0%</div>
-                            </div>
-                            <div id="audit-flag-card" class="audit-banner-fresh" style="display: none;">
-                                ⚠️ <strong>Attention:</strong> Some invoices failed math verification. Manual audit recommended.
+                                <!-- Tax vs Net Comparison -->
+                                <div class="chart-card">
+                                    <h3 class="card-section-title">Tax Efficiency</h3>
+                                    <div class="tax-ratio-container">
+                                        <div class="tax-ratio-header">
+                                            <div class="ratio-item">
+                                                <span class="ratio-dot net"></span>
+                                                <span class="ratio-label">Net</span>
+                                            </div>
+                                            <div class="ratio-item">
+                                                <span class="ratio-dot tax"></span>
+                                                <span class="ratio-label">Tax</span>
+                                            </div>
+                                        </div>
+                                        <div class="ratio-bar-wrapper">
+                                            <div id="ratio-bar-net" class="ratio-segment net" style="width: 85%;"></div>
+                                            <div id="ratio-bar-tax" class="ratio-segment tax" style="width: 15%;"></div>
+                                        </div>
+                                        <div class="ratio-footer">
+                                            <span id="tax-efficiency-text">Tax represents 15% of your total spend</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

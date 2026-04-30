@@ -7,11 +7,15 @@ import os
 import json
 from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 
 from ocr_engine import extract_text
 from parser import parse_invoice
 from categorizer import categorize_invoice
 from csv_generator import generate_csv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -72,13 +76,28 @@ def upload_file():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        # Step 1: Extract text using OCR
+        # Step 1: Extract text using OCR (Local & Fast)
         raw_text = extract_text(filepath)
-
-        # Step 2: Parse invoice fields
+        
+        # Step 2: Try Fast Local Parser first (sub-0.1s)
         parsed_data = parse_invoice(raw_text)
-
-        # Step 3: Categorize the invoice
+        
+        # Step 3: Performance Gate
+        # If local parser math is verified (confidence > 0.9), skip Gemini for speed (< 2s total)
+        has_api_key = os.getenv("GOOGLE_API_KEY") and "your_api_key" not in os.getenv("GOOGLE_API_KEY")
+        
+        if parsed_data.get('confidence', 0) < 0.9 and has_api_key:
+            # Fallback to AI only if local math failed or confidence is low
+            try:
+                from ai_parser import parse_with_gemini
+                ai_data = parse_with_gemini(filepath)
+                if ai_data.get('status') == 'success':
+                    ai_data['raw_text'] = raw_text
+                    parsed_data = ai_data
+            except:
+                pass # Continue with local data if AI fails
+        
+        # Step 4: Categorize (Local & Fast)
         category_result = categorize_invoice(
             parsed_data.get('vendor', ''),
             raw_text,
@@ -87,13 +106,22 @@ def upload_file():
 
         # Merge category info into parsed data
         parsed_data['category'] = category_result['category']
-        # Combine confidences (Average or just take the categorizer's for now)
         parsed_data['cat_confidence'] = category_result['confidence']
+        
+        # Explicitly mention what kind of product it is (Category: Description)
+        if parsed_data.get('product') and parsed_data['category'] != 'Other':
+            parsed_data['product'] = f"{parsed_data['category']}: {parsed_data['product']}"
+        elif not parsed_data.get('product'):
+            parsed_data['product'] = parsed_data['category']
+            
         parsed_data['filename'] = filename
 
-        # Clean up uploaded file
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        # Clean up uploaded file (best-effort — ignore lock errors on Windows)
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        except OSError:
+            pass  # File will be cleaned up on next request or manually
 
         return jsonify({
             'status': 'success',

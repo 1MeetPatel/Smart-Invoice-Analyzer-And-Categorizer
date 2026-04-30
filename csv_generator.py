@@ -27,15 +27,15 @@ def generate_csv(invoice_records, export_dir='exports'):
     filename = f'invoices_{timestamp}.csv'
     filepath = os.path.join(export_dir, filename)
 
-    # Define CSV columns
+    # Define CSV columns (Simplified as requested)
     fieldnames = [
-        'Invoice Number',
+        'Invoice ID',
         'Date',
-        'Vendor',
-        'Subtotal',
-        'Tax',
-        'Total Amount',
-        'Category',
+        'Product',
+        'Amount',
+        'Seller TaxID',
+        'Buyer TaxID',
+        'Vendor Name',
         'Confidence'
     ]
 
@@ -46,13 +46,13 @@ def generate_csv(invoice_records, export_dir='exports'):
 
             for record in invoice_records:
                 row = {
-                    'Invoice Number': record.get('invoice_number', 'N/A'),
+                    'Invoice ID': record.get('invoice_number', 'N/A'),
                     'Date': record.get('date', 'N/A'),
-                    'Vendor': record.get('vendor', 'Unknown'),
-                    'Subtotal': record.get('subtotal', '0.00'),
-                    'Tax': record.get('tax', '0.00'),
-                    'Total Amount': record.get('total', '0.00'),
-                    'Category': record.get('category', 'Uncategorized'),
+                    'Product': record.get('product', 'N/A'),
+                    'Amount': record.get('total', '0.00'),
+                    'Seller TaxID': record.get('tax_id', 'N/A'),
+                    'Buyer TaxID': record.get('buyer_id', 'N/A'),
+                    'Vendor Name': record.get('vendor', 'Unknown'),
                     'Confidence': record.get('confidence', '0.0'),
                 }
                 writer.writerow(row)

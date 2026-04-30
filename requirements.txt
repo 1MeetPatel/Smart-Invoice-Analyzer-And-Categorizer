@@ -4,3 +4,5 @@ Pillow
 opencv-python
 PyPDF2
 pdf2image
+google-generativeai
+python-dotenv
