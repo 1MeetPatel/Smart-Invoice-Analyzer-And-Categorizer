@@ -137,6 +137,48 @@ body {
     gap: 24px;
 }
 
+.btn-csv {
+    background: white;
+    color: var(--accent-color);
+    border: 1.5px solid var(--accent-color);
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.btn-csv:hover {
+    background: var(--accent-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2);
+}
+
+.user-profile {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.user-profile:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    transform: scale(1.05);
+}
+
 /* --- Content Body --- */
 .content-body {
     padding: 60px 40px;
