@@ -29,102 +29,55 @@ if os.name == 'nt':
 
 def preprocess_image(image_path):
     """
-    Apply advanced preprocessing pipeline to improve OCR accuracy.
-    Steps: Upscale → Grayscale → Denoise → Adaptive Threshold → Deskew
+    Optimized preprocessing for SPEED and ACCURACY.
+    Targets < 2s total processing time.
     """
     # Read image
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Could not read image: {image_path}")
 
-    # 1. Upscale if image is too small (helps Tesseract with small fonts)
-    height, width = img.shape[:2]
-    if width < 1500:
-        scale_factor = 2
-        img = cv2.resize(img, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
+    # 1. Faster Resizing: Resize to a standard height (2000px) for consistent OCR
+    target_h = 2000
+    h, w = img.shape[:2]
+    if h < target_h:
+        ratio = target_h / h
+        img = cv2.resize(img, (int(w * ratio), target_h), interpolation=cv2.INTER_LINEAR)
 
-    # 2. Convert to grayscale
+    # 2. Grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # 3. Advanced Denoising (Non-Local Means Denoising is better than Gaussian for text)
-    denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
-
-    # 4. Adaptive Thresholding (Otsu's Binarization works well for scanned docs)
-    # We use a mix of CLAHE and thresholding
+    # 3. Faster Enhancement: CLAHE instead of slow denoising
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    contrast_enhanced = clahe.apply(denoised)
+    contrast = clahe.apply(gray)
     
-    _, thresh = cv2.threshold(contrast_enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # 4. Otsu Binarization (Fastest)
+    _, thresh = cv2.threshold(contrast, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-    # 5. Deskew the image
-    deskewed = deskew_image(thresh)
-
-    return deskewed
-
-
-def deskew_image(image):
-    """Correct skew in scanned documents using contour detection."""
-    coords = np.column_stack(np.where(image > 0))
-    if len(coords) < 5:
-        return image
-
-    try:
-        angle = cv2.minAreaRect(coords)[-1]
-        if angle < -45:
-            angle = -(90 + angle)
-        else:
-            angle = -angle
-
-        # Only deskew if angle is significant
-        if 0.5 < abs(angle) < 45:
-            (h, w) = image.shape[:2]
-            center = (w // 2, h // 2)
-            M = cv2.getRotationMatrix2D(center, angle, 1.0)
-            rotated = cv2.warpAffine(
-                image, M, (w, h),
-                flags=cv2.INTER_CUBIC,
-                borderMode=cv2.BORDER_REPLICATE
-            )
-            return rotated
-    except Exception:
-        pass
-
-    return image
+    return thresh
 
 
 def extract_text_from_image(image_path):
     """
-    Extract text from an image file using multi-pass Tesseract OCR.
-    Tries different PSM modes to find the best result.
+    Ultra-fast OCR extraction using optimized single-pass configuration.
     """
     try:
         # Preprocess the image
         processed = preprocess_image(image_path)
 
-        # Save processed image temporarily
-        temp_path = image_path + '_processed.png'
-        cv2.imwrite(temp_path, processed)
+        # Convert back to PIL for Tesseract (In-memory)
+        pil_img = Image.fromarray(processed)
 
-        # Multi-pass OCR: Try PSM 6 (uniform block) then PSM 3 (fully automatic)
-        best_text = ""
-        configs = [r'--oem 3 --psm 6', r'--oem 3 --psm 3']
-        
-        for config in configs:
-            text = pytesseract.image_to_string(Image.open(temp_path), config=config)
-            if len(text.strip()) > len(best_text.strip()):
-                best_text = text
+        # Single-pass OCR with Optimized Config
+        # OEM 1 = LSTM (Fastest/Most Accurate), PSM 3 = Auto Layout
+        config = r'--oem 1 --psm 3'
+        text = pytesseract.image_to_string(pil_img, config=config)
 
-        # Clean up temp file
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        # Fallback if empty
+        if len(text.strip()) < 5:
+            text = pytesseract.image_to_string(Image.open(image_path), config=r'--oem 1 --psm 3')
 
-        # Final check: if processed is still empty, try original image as last resort
-        if len(best_text.strip()) < 10:
-            text_original = pytesseract.image_to_string(Image.open(image_path), config=r'--oem 3 --psm 3')
-            if len(text_original.strip()) > len(best_text.strip()):
-                best_text = text_original
-
-        return best_text.strip()
+        return text.strip()
 
     except Exception as e:
         raise RuntimeError(f"OCR extraction failed: {str(e)}")
