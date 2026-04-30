@@ -9,7 +9,8 @@
 const state = {
     results: [],
     processing: false,
-    processedCount: 0
+    processedCount: 0,
+    charts: {}
 };
 
 // ========================
@@ -22,10 +23,11 @@ const DOM = {
     processingStatus: document.getElementById('processing-status'),
     resultsBody: document.getElementById('results-body'),
     exportCsvBtn: document.getElementById('export-csv-btn'),
-    statProcessed: document.getElementById('stat-processed'),
-    statDone: document.getElementById('stat-done'),
-    statCategories: document.getElementById('stat-categories'),
-    statTotal: document.getElementById('stat-total'),
+    navLinks: document.querySelectorAll('.header-nav-link'),
+    pageViews: document.querySelectorAll('.page-view'),
+    reportTotalSpend: document.getElementById('report-total-spend'),
+    reportAvgInvoice: document.getElementById('report-avg-invoice'),
+    reportTotalCount: document.getElementById('report-total-count'),
 };
 
 // ========================
@@ -34,6 +36,8 @@ const DOM = {
 document.addEventListener('DOMContentLoaded', () => {
     initUploadZone();
     initButtons();
+    initNavigation();
+    initCharts();
     checkHealth();
 });
 
@@ -67,6 +71,32 @@ function initUploadZone() {
 
 function initButtons() {
     DOM.exportCsvBtn.addEventListener('click', exportCSV);
+}
+
+function initNavigation() {
+    DOM.navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = link.getAttribute('data-page');
+            if (!page) return;
+
+            // Update active link
+            DOM.navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+
+            // Update visible view
+            DOM.pageViews.forEach(view => {
+                view.classList.remove('active');
+                if (view.id === `${page}-view`) {
+                    view.classList.add('active');
+                }
+            });
+
+            if (page === 'reports') {
+                updateReports();
+            }
+        });
+    });
 }
 
 // ========================
@@ -113,7 +143,7 @@ async function processFiles(files) {
 
     if (successCount > 0) {
         renderResults();
-        updateStats();
+        updateReports();
         showToast(`Processed ${successCount} file(s)`, 'success');
     }
 }
@@ -176,24 +206,108 @@ function getCategoryBadgeClass(cat) {
     return map[cat] || 'badge-purple';
 }
 
-function updateStats() {
-    DOM.statProcessed.textContent = state.processedCount;
-    DOM.statDone.textContent = state.results.length;
+// ========================
+// Reports & Charts
+// ========================
+function initCharts() {
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    };
 
-    const categories = new Set(state.results.map(r => r.category));
-    DOM.statCategories.textContent = categories.size;
+    // Category Chart
+    state.charts.category = new Chart(document.getElementById('chart-category'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'] }] },
+        options: chartOptions
+    });
 
-    const total = state.results.reduce((sum, r) => {
-        const val = parseFloat((r.total || '0').toString().replace(/[^0-9.]/g, ''));
-        return sum + (isNaN(val) ? 0 : val);
-    }, 0);
-    DOM.statTotal.textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    // Trend Chart
+    state.charts.trend = new Chart(document.getElementById('chart-trend'), {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: 'Spending (₹)', data: [], borderColor: '#6366f1', tension: 0.4, fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)' }] },
+        options: chartOptions
+    });
+
+    // Vendors Chart
+    state.charts.vendors = new Chart(document.getElementById('chart-vendors'), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: 'Total Sales (₹)', data: [], backgroundColor: '#6366f1' }] },
+        options: { ...chartOptions, indexAxis: 'y' }
+    });
+
+    // Distribution Chart
+    state.charts.distribution = new Chart(document.getElementById('chart-distribution'), {
+        type: 'pie',
+        data: { labels: ['Processed', 'Pending'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#f59e0b'] }] },
+        options: chartOptions
+    });
 }
+
+function updateReports() {
+    if (state.results.length === 0) return;
+
+    // 1. Summary Metrics
+    const totalSpend = state.results.reduce((sum, r) => sum + parseAmount(r.total), 0);
+    const avgInvoice = totalSpend / state.results.length;
+
+    DOM.reportTotalSpend.textContent = `₹${totalSpend.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+    DOM.reportAvgInvoice.textContent = `₹${avgInvoice.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+    DOM.reportTotalCount.textContent = state.results.length;
+
+    // 2. Category Data
+    const categoryMap = {};
+    state.results.forEach(r => {
+        const cat = r.category || 'Other';
+        categoryMap[cat] = (categoryMap[cat] || 0) + parseAmount(r.total);
+    });
+    state.charts.category.data.labels = Object.keys(categoryMap);
+    state.charts.category.data.datasets[0].data = Object.values(categoryMap);
+    state.charts.category.update();
+
+    // 3. Trend Data (Group by Date)
+    const trendMap = {};
+    state.results.forEach(r => {
+        const date = r.date || 'Unknown';
+        trendMap[date] = (trendMap[date] || 0) + parseAmount(r.total);
+    });
+    // Sort dates roughly for trend
+    const sortedDates = Object.keys(trendMap).sort();
+    state.charts.trend.data.labels = sortedDates;
+    state.charts.trend.data.datasets[0].data = sortedDates.map(d => trendMap[d]);
+    state.charts.trend.update();
+
+    // 4. Vendor Data
+    const vendorMap = {};
+    state.results.forEach(r => {
+        const vendor = r.vendor || 'Unknown';
+        vendorMap[vendor] = (vendorMap[vendor] || 0) + parseAmount(r.total);
+    });
+    const sortedVendors = Object.entries(vendorMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    state.charts.vendors.data.labels = sortedVendors.map(v => v[0]);
+    state.charts.vendors.data.datasets[0].data = sortedVendors.map(v => v[1]);
+    state.charts.vendors.update();
+
+    // 5. Distribution Data
+    state.charts.distribution.data.datasets[0].data = [state.results.length, 0];
+    state.charts.distribution.update();
+}
+
+function parseAmount(amt) {
+    if (!amt) return 0;
+    const val = parseFloat(amt.toString().replace(/[^0-9.]/g, ''));
+    return isNaN(val) ? 0 : val;
+}
+
+
 
 window.deleteRow = function(index) {
     state.results.splice(index, 1);
     renderResults();
-    updateStats();
+    updateReports();
 };
 
 window.viewRawText = function(index) {
