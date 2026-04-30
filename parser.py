@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 def extract_invoice_number(text):
-    """Extract invoice number from text using multiple patterns."""
+    """Extract invoice number while filtering out Tax IDs (GSTIN/VAT/PAN)."""
     patterns = [
         # Standard invoice number labels
         r'(?:Invoice|Inv|Bill|Receipt|Order|Reference|Ref)[\s]*(?:No|Number|#|Num|ID)?[\s]*[:\-\.]?\s*([A-Za-z0-9\-\/\.]+)',
@@ -18,29 +18,43 @@ def extract_invoice_number(text):
         r'#\s*(\d{4,})',
     ]
 
+    # Labels that indicate it's NOT an invoice number
+    tax_labels = r'(?:GST|VAT|PAN|TIN|Tax\s*ID|Reg|Registration|ABN|EIN)'
+
     for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            result = match.group(1).strip()
-            # Clean trailing punctuation
+        matches = re.finditer(pattern, text, re.IGNORECASE)
+        for m in matches:
+            result = m.group(1).strip() if m.groups() else m.group(0).strip()
+            
+            # Context check: Look for tax labels before the match
+            start_idx = max(0, m.start() - 25)
+            context = text[start_idx:m.start()].lower()
+            if any(label.lower() in context for label in tax_labels.split('|')):
+                continue
+
+            # Filtering:
+            # 1. Clean trailing punctuation
             result = re.sub(r'[\.\-\/]+$', '', result).strip()
-            if len(result) >= 3:
+            # 2. Length check: Tax IDs are often 12-15 chars, simple invoice numbers are usually shorter or have specific prefixes
+            if 3 <= len(result) <= 20:
+                # If it's all letters or all numbers (too long), it might be an ID
+                if len(result) > 12 and result.isalnum(): continue
                 return result
 
     return "N/A"
 
 
 def extract_date(text):
-    """Extract date from text, supporting multiple formats and month names."""
-    # List of common date labels
-    labels = r'(?:Date|Dated|Issue\s*Date|Bill\s*Date|Inv\s*Date)'
-    
-    # Try with labels first
-    label_pattern = f'{labels}[\s]*[:\-\.]?\s*([\d]{{1,2}}[\/\-\.][\d]{{1,2}}[\/\-\.][\d]{{2,4}})'
-    match = re.search(label_pattern, text, re.IGNORECASE)
-    if match: return match.group(1).strip()
+    """
+    Extract date from text with strict filtering to avoid Tax IDs.
+    Supports multiple formats but ignores alphanumeric strings (IDs).
+    """
+    # 1. Labels to prioritize
+    date_labels = r'(?:Date|Dated|Issue\s*Date|Bill\s*Date|Inv\s*Date)'
+    # 2. Labels to EXCLUDE (Tax IDs often look like dates)
+    tax_labels = r'(?:GST|VAT|TIN|PAN|Tax\s*ID|Reg|No)'
 
-    # Generic date patterns
+    # Strategy: Find all potential date patterns
     date_patterns = [
         r'\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}',  # 12/04/2024
         r'\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}',  # 2024-04-12
@@ -48,10 +62,41 @@ def extract_date(text):
         r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}', # April 12, 2024
     ]
 
+    best_match = None
+    
+    # First pass: Look for patterns immediately following a Date label
+    label_pattern = f'{date_labels}[\s]*[:\-\.]?\s*(' + '|'.join(date_patterns) + ')'
+    match = re.search(label_pattern, text, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+
+    # Second pass: Generic search with strict filtering
     for pattern in date_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(0).strip()
+        matches = re.finditer(pattern, text, re.IGNORECASE)
+        for m in matches:
+            date_str = m.group(0).strip()
+            
+            # GET CONTEXT: Look at the 20 characters before the match
+            start_idx = max(0, m.start() - 20)
+            context = text[start_idx:m.start()].lower()
+            
+            # FILTER 1: If tax labels are in the context, skip it
+            if any(label.lower() in context for label in tax_labels.split('|')):
+                continue
+                
+            # FILTER 2: Check if it's part of a longer alphanumeric ID
+            # A date shouldn't have letters directly attached to it (except month names)
+            surrounding = text[max(0, m.start()-1) : min(len(text), m.end()+1)]
+            if re.search(r'[A-Za-z0-9]{10,}', surrounding) and not any(mon in date_str for mon in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']):
+                continue
+
+            # FILTER 3: Sanity check for year
+            year_match = re.search(r'\d{4}', date_str)
+            if year_match:
+                year = int(year_match.group(0))
+                if year < 1990 or year > 2030: continue
+            
+            return date_str
 
     return "N/A"
 
