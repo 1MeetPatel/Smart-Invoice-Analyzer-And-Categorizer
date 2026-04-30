@@ -217,106 +217,91 @@ function getCategoryBadgeClass(cat) {
 // Reports & Charts
 // ========================
 function initCharts() {
-    // Set global defaults for larger visibility
+    // Set global defaults for premium look
     Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.font.size = 14;
-    Chart.defaults.color = '#475569';
+    Chart.defaults.font.size = 13;
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
     Chart.defaults.plugins.legend.labels.padding = 20;
 
-    const chartOptions = {
+    const commonOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { 
-                position: 'bottom',
-                labels: {
-                    usePointStyle: true,
-                    padding: 25,
-                    font: { size: 14, weight: '600' }
-                }
-            },
+            legend: { position: 'bottom' },
             tooltip: {
                 backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                padding: 16,
-                titleFont: { size: 16, weight: '700' },
-                bodyFont: { size: 14 },
-                cornerRadius: 10,
-                displayColors: true
+                padding: 12,
+                cornerRadius: 8,
+                titleFont: { size: 14, weight: '700' }
             }
         },
         scales: {
             x: { grid: { display: false } },
-            y: { 
-                beginAtZero: true,
-                grid: { color: 'rgba(226, 232, 240, 0.5)' }
-            }
+            y: { border: { display: false }, grid: { color: 'rgba(226, 232, 240, 0.5)' } }
         }
     };
 
-    // Category Chart
-    state.charts.category = new Chart(document.getElementById('chart-category'), {
-        type: 'doughnut',
-        data: { labels: [], datasets: [{ 
-            data: [], 
-            backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'],
-            borderWidth: 0,
-            hoverOffset: 20
-        }] },
-        options: {
-            ...chartOptions,
-            cutout: '65%',
-            plugins: {
-                ...chartOptions.plugins,
-                legend: { ...chartOptions.plugins.legend, position: 'right' }
-            }
-        }
-    });
-
-    // Trend Chart
+    // 1. Trend Area Chart (with Gradient)
     const trendCtx = document.getElementById('chart-trend').getContext('2d');
-    const trendGradient = trendCtx.createLinearGradient(0, 0, 0, 400);
-    trendGradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
-    trendGradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+    const trendGrad = trendCtx.createLinearGradient(0, 0, 0, 300);
+    trendGrad.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+    trendGrad.addColorStop(1, 'rgba(99, 102, 241, 0)');
 
     state.charts.trend = new Chart(trendCtx, {
         type: 'line',
         data: { labels: [], datasets: [{ 
-            label: 'Spending (₹)', 
-            data: [], 
-            borderColor: '#6366f1', 
-            borderWidth: 4,
-            pointBackgroundColor: '#6366f1',
-            pointRadius: 6,
-            pointHoverRadius: 8,
-            tension: 0.4, 
-            fill: true, 
-            backgroundColor: trendGradient 
+            label: 'Spending (₹)', data: [], borderColor: '#6366f1', borderWidth: 3, 
+            fill: true, backgroundColor: trendGrad, tension: 0.4, pointRadius: 4
         }] },
-        options: chartOptions
+        options: commonOptions
     });
 
-    // Vendors Chart
+    // 2. Category Doughnut
+    state.charts.category = new Chart(document.getElementById('chart-category'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [{ 
+            data: [], backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+            borderWidth: 0, hoverOffset: 15
+        }] },
+        options: { ...commonOptions, cutout: '70%' }
+    });
+
+    // 3. Vendors Horizontal Bar
     state.charts.vendors = new Chart(document.getElementById('chart-vendors'), {
         type: 'bar',
         data: { labels: [], datasets: [{ 
-            label: 'Total Sales (₹)', 
-            data: [], 
-            backgroundColor: '#6366f1',
-            borderRadius: 10,
-            barThickness: 30
+            label: 'Spend by Vendor (₹)', data: [], backgroundColor: '#6366f1', borderRadius: 6
         }] },
-        options: { ...chartOptions, indexAxis: 'y' }
+        options: { ...commonOptions, indexAxis: 'y' }
     });
 
-    // Distribution Chart
-    state.charts.distribution = new Chart(document.getElementById('chart-distribution'), {
+    // 4. Status Pie
+    state.charts.status = new Chart(document.getElementById('chart-status'), {
         type: 'pie',
-        data: { labels: ['Processed', 'Pending'], datasets: [{ 
-            data: [0, 0], 
-            backgroundColor: ['#10b981', '#f59e0b'],
+        data: { labels: ['Processed', 'Flagged', 'Pending'], datasets: [{ 
+            data: [0, 0, 0], backgroundColor: ['#10b981', '#ef4444', '#f59e0b'], borderWidth: 0
+        }] },
+        options: commonOptions
+    });
+
+    // 5. Comparison Bar
+    state.charts.comparison = new Chart(document.getElementById('chart-comparison'), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ 
+            label: 'Current Period', data: [], backgroundColor: '#6366f1', borderRadius: 6
+        }] },
+        options: commonOptions
+    });
+
+    // 6. Distribution Polar Area
+    state.charts.distribution = new Chart(document.getElementById('chart-distribution'), {
+        type: 'polarArea',
+        data: { labels: [], datasets: [{ 
+            data: [], backgroundColor: ['rgba(99, 102, 241, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)'],
             borderWidth: 0
         }] },
-        options: chartOptions
+        options: { ...commonOptions, scales: { r: { grid: { color: 'rgba(226, 232, 240, 0.5)' } } } }
     });
 }
 
@@ -331,23 +316,22 @@ function updateReports() {
     DOM.reportAvgInvoice.textContent = `₹${avgInvoice.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
     DOM.reportTotalCount.textContent = state.results.length;
 
-    // 2. Category Data
-    const categoryMap = {};
+    // 2. Category Breakdown
+    const catMap = {};
     state.results.forEach(r => {
         const cat = r.category || 'Other';
-        categoryMap[cat] = (categoryMap[cat] || 0) + parseAmount(r.total);
+        catMap[cat] = (catMap[cat] || 0) + parseAmount(r.total);
     });
-    state.charts.category.data.labels = Object.keys(categoryMap);
-    state.charts.category.data.datasets[0].data = Object.values(categoryMap);
+    state.charts.category.data.labels = Object.keys(catMap);
+    state.charts.category.data.datasets[0].data = Object.values(catMap);
     state.charts.category.update();
 
-    // 3. Trend Data (Group by Date)
+    // 3. Trend Data
     const trendMap = {};
     state.results.forEach(r => {
         const date = r.date || 'Unknown';
         trendMap[date] = (trendMap[date] || 0) + parseAmount(r.total);
     });
-    // Sort dates roughly for trend
     const sortedDates = Object.keys(trendMap).sort();
     state.charts.trend.data.labels = sortedDates;
     state.charts.trend.data.datasets[0].data = sortedDates.map(d => trendMap[d]);
@@ -356,16 +340,25 @@ function updateReports() {
     // 4. Vendor Data
     const vendorMap = {};
     state.results.forEach(r => {
-        const vendor = r.vendor || 'Unknown';
-        vendorMap[vendor] = (vendorMap[vendor] || 0) + parseAmount(r.total);
+        const v = r.vendor || 'Unknown';
+        vendorMap[v] = (vendorMap[v] || 0) + parseAmount(r.total);
     });
-    const sortedVendors = Object.entries(vendorMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const sortedVendors = Object.entries(vendorMap).sort((a,b) => b[1]-a[1]).slice(0, 5);
     state.charts.vendors.data.labels = sortedVendors.map(v => v[0]);
     state.charts.vendors.data.datasets[0].data = sortedVendors.map(v => v[1]);
     state.charts.vendors.update();
 
-    // 5. Distribution Data
-    state.charts.distribution.data.datasets[0].data = [state.results.length, 0];
+    // 5. Status Data
+    state.charts.status.data.datasets[0].data = [state.results.length, 0, 0];
+    state.charts.status.update();
+
+    // 6. Comparison & Distribution
+    state.charts.comparison.data.labels = sortedDates.slice(-5);
+    state.charts.comparison.data.datasets[0].data = sortedDates.slice(-5).map(d => trendMap[d]);
+    state.charts.comparison.update();
+
+    state.charts.distribution.data.labels = Object.keys(catMap).slice(0, 3);
+    state.charts.distribution.data.datasets[0].data = Object.values(catMap).slice(0, 3);
     state.charts.distribution.update();
 }
 

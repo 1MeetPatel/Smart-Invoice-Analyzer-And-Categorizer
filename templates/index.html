@@ -109,47 +109,87 @@
             <!-- Reports View -->
             <div id="reports-view" class="page-view">
                 <div class="page-title">
-                    <h2>Financial Reports</h2>
-                    <p>Visual analysis of your company's spending and vendor data</p>
+                    <h2>Advanced Analytics</h2>
+                    <p>Deep-dive into your financial data with real-time insights</p>
+                </div>
+
+                <!-- Report Filters -->
+                <div class="card" style="padding: 20px 40px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+                    <div style="display: flex; gap: 24px; align-items: center;">
+                        <div class="filter-group">
+                            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 8px;">Date Range</label>
+                            <select class="form-select" style="padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-weight: 600;">
+                                <option>Last 30 Days</option>
+                                <option>This Quarter</option>
+                                <option>Year to Date</option>
+                                <option>All Time</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 8px;">Category</label>
+                            <select class="form-select" style="padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-weight: 600;">
+                                <option>All Categories</option>
+                                <option>Utilities</option>
+                                <option>Software & IT</option>
+                                <option>Office Supplies</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-choose" style="padding: 10px 24px;">Generate Custom Report</button>
                 </div>
 
                 <div class="reports-summary-cards">
                     <div class="stat-card">
                         <p class="stat-label">Total Spend</p>
                         <h3 id="report-total-spend">₹0</h3>
+                        <p style="color: #10b981; font-size: 0.85rem; margin-top: 8px; font-weight: 600;">↑ 12% vs last month</p>
                     </div>
                     <div class="stat-card">
                         <p class="stat-label">Avg. Invoice</p>
                         <h3 id="report-avg-invoice">₹0</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 8px;">Per transaction</p>
                     </div>
                     <div class="stat-card">
                         <p class="stat-label">Total Invoices</p>
                         <h3 id="report-total-count">0</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 8px;">Successfully processed</p>
                     </div>
                 </div>
 
-                <div class="reports-grid">
+                <div class="reports-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 32px;">
                     <div class="chart-card">
-                        <h3 class="chart-title">Spending by Category</h3>
-                        <div class="chart-container">
-                            <canvas id="chart-category"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h3 class="chart-title">Monthly Spending Trend</h3>
-                        <div class="chart-container">
+                        <h3 class="chart-title">Expenses Over Time</h3>
+                        <div class="chart-container" style="height: 300px;">
                             <canvas id="chart-trend"></canvas>
                         </div>
                     </div>
                     <div class="chart-card">
+                        <h3 class="chart-title">Category Breakdown</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="chart-category"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
                         <h3 class="chart-title">Top Vendors</h3>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px;">
                             <canvas id="chart-vendors"></canvas>
                         </div>
                     </div>
                     <div class="chart-card">
-                        <h3 class="chart-title">Invoice Distribution</h3>
-                        <div class="chart-container">
+                        <h3 class="chart-title">Invoices by Status</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="chart-status"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">Monthly Comparison</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="chart-comparison"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">Payment Distribution</h3>
+                        <div class="chart-container" style="height: 300px;">
                             <canvas id="chart-distribution"></canvas>
                         </div>
                     </div>
