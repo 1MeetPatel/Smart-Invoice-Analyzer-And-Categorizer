@@ -29,42 +29,41 @@ if os.name == 'nt':
 
 def preprocess_image(image_path):
     """
-    Apply preprocessing pipeline to improve OCR accuracy.
-    Steps: grayscale → denoise → threshold → deskew → contrast enhance
+    Apply advanced preprocessing pipeline to improve OCR accuracy.
+    Steps: Upscale → Grayscale → Denoise → Adaptive Threshold → Deskew
     """
     # Read image
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Could not read image: {image_path}")
 
-    # Convert to grayscale
+    # 1. Upscale if image is too small (helps Tesseract with small fonts)
+    height, width = img.shape[:2]
+    if width < 1500:
+        scale_factor = 2
+        img = cv2.resize(img, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
+
+    # 2. Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Noise removal using Gaussian blur
-    denoised = cv2.GaussianBlur(gray, (3, 3), 0)
+    # 3. Advanced Denoising (Non-Local Means Denoising is better than Gaussian for text)
+    denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
 
-    # Apply median filter for salt-and-pepper noise
-    denoised = cv2.medianBlur(denoised, 3)
-
-    # Adaptive thresholding for binarization
-    thresh = cv2.adaptiveThreshold(
-        denoised, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY, 11, 2
-    )
-
-    # Contrast enhancement using CLAHE
+    # 4. Adaptive Thresholding (Otsu's Binarization works well for scanned docs)
+    # We use a mix of CLAHE and thresholding
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(gray)
+    contrast_enhanced = clahe.apply(denoised)
+    
+    _, thresh = cv2.threshold(contrast_enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-    # Deskew the image
-    deskewed = deskew_image(enhanced)
+    # 5. Deskew the image
+    deskewed = deskew_image(thresh)
 
     return deskewed
 
 
 def deskew_image(image):
-    """Correct skew in scanned documents."""
+    """Correct skew in scanned documents using contour detection."""
     coords = np.column_stack(np.where(image > 0))
     if len(coords) < 5:
         return image
@@ -77,7 +76,7 @@ def deskew_image(image):
             angle = -angle
 
         # Only deskew if angle is significant
-        if abs(angle) > 0.5:
+        if 0.5 < abs(angle) < 45:
             (h, w) = image.shape[:2]
             center = (w // 2, h // 2)
             M = cv2.getRotationMatrix2D(center, angle, 1.0)
@@ -95,8 +94,8 @@ def deskew_image(image):
 
 def extract_text_from_image(image_path):
     """
-    Extract text from an image file using Tesseract OCR.
-    Applies preprocessing before OCR for better accuracy.
+    Extract text from an image file using multi-pass Tesseract OCR.
+    Tries different PSM modes to find the best result.
     """
     try:
         # Preprocess the image
@@ -106,27 +105,26 @@ def extract_text_from_image(image_path):
         temp_path = image_path + '_processed.png'
         cv2.imwrite(temp_path, processed)
 
-        # Run Tesseract OCR with optimized config
-        custom_config = r'--oem 3 --psm 6'
-        text = pytesseract.image_to_string(
-            Image.open(temp_path),
-            config=custom_config
-        )
+        # Multi-pass OCR: Try PSM 6 (uniform block) then PSM 3 (fully automatic)
+        best_text = ""
+        configs = [r'--oem 3 --psm 6', r'--oem 3 --psm 3']
+        
+        for config in configs:
+            text = pytesseract.image_to_string(Image.open(temp_path), config=config)
+            if len(text.strip()) > len(best_text.strip()):
+                best_text = text
 
         # Clean up temp file
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-        # If preprocessed result is poor, try original image
-        if len(text.strip()) < 10:
-            text_original = pytesseract.image_to_string(
-                Image.open(image_path),
-                config=custom_config
-            )
-            if len(text_original.strip()) > len(text.strip()):
-                text = text_original
+        # Final check: if processed is still empty, try original image as last resort
+        if len(best_text.strip()) < 10:
+            text_original = pytesseract.image_to_string(Image.open(image_path), config=r'--oem 3 --psm 3')
+            if len(text_original.strip()) > len(best_text.strip()):
+                best_text = text_original
 
-        return text.strip()
+        return best_text.strip()
 
     except Exception as e:
         raise RuntimeError(f"OCR extraction failed: {str(e)}")

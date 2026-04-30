@@ -87,7 +87,8 @@ def upload_file():
 
         # Merge category info into parsed data
         parsed_data['category'] = category_result['category']
-        parsed_data['confidence'] = category_result['confidence']
+        # Combine confidences (Average or just take the categorizer's for now)
+        parsed_data['cat_confidence'] = category_result['confidence']
         parsed_data['filename'] = filename
 
         # Clean up uploaded file

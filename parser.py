@@ -10,64 +10,46 @@ from datetime import datetime
 def extract_invoice_number(text):
     """Extract invoice number from text using multiple patterns."""
     patterns = [
-        # "Invoice Number: INV-2024-00847" or "Invoice No: 12345"
-        r'(?:Invoice|Inv)[\s]*(?:No|Number|#|Num)[\s]*[:\-\.]?\s*([A-Za-z0-9\-\/]+(?:[\-\/][A-Za-z0-9]+)*)',
-        # "INV-12345" standalone
-        r'(INV[\-\s]?\d[\w\-]*)',
-        # "Bill No: 12345"
-        r'(?:Bill|Receipt)[\s]*(?:No|Number|#)?[\s]*[:\-\.]?\s*([A-Za-z0-9\-\/]+)',
-        # "#12345"
-        r'#\s*(\d{3,})',
-        # "Reference: ABC-123"
-        r'(?:Reference|Ref)[\s]*[:\-\.]?\s*([A-Za-z0-9\-\/]+)',
-        # "Order No: 12345"
-        r'(?:Order)[\s]*(?:No|Number|#|ID)?[\s]*[:\-\.]?\s*([A-Za-z0-9\-\/]+)',
+        # Standard invoice number labels
+        r'(?:Invoice|Inv|Bill|Receipt|Order|Reference|Ref)[\s]*(?:No|Number|#|Num|ID)?[\s]*[:\-\.]?\s*([A-Za-z0-9\-\/\.]+)',
+        # standalone INV patterns
+        r'(INV[\-\s]?\d[\w\-\.]*)',
+        # Standalone numeric patterns (e.g. # 12345)
+        r'#\s*(\d{4,})',
     ]
 
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             result = match.group(1).strip()
-            # Validate: should be at least 2 chars
-            if len(result) >= 2:
+            # Clean trailing punctuation
+            result = re.sub(r'[\.\-\/]+$', '', result).strip()
+            if len(result) >= 3:
                 return result
 
     return "N/A"
 
 
 def extract_date(text):
-    """Extract date from text, supporting multiple formats."""
+    """Extract date from text, supporting multiple formats and month names."""
+    # List of common date labels
+    labels = r'(?:Date|Dated|Issue\s*Date|Bill\s*Date|Inv\s*Date)'
+    
+    # Try with labels first
+    label_pattern = f'{labels}[\s]*[:\-\.]?\s*([\d]{{1,2}}[\/\-\.][\d]{{1,2}}[\/\-\.][\d]{{2,4}})'
+    match = re.search(label_pattern, text, re.IGNORECASE)
+    if match: return match.group(1).strip()
+
+    # Generic date patterns
     date_patterns = [
-        # DD/MM/YYYY or DD-MM-YYYY
-        (r'(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})', '%d/%m/%Y'),
-        # YYYY-MM-DD (ISO format)
-        (r'(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})', '%Y/%m/%d'),
-        # Month DD, YYYY
-        (r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)\s+(\d{1,2}),?\s+(\d{4})', None),
-        # DD Month YYYY
-        (r'(\d{1,2})\s+((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)\s+(\d{4})', None),
+        r'\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}',  # 12/04/2024
+        r'\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}',  # 2024-04-12
+        r'\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}', # 12 April 2024
+        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}', # April 12, 2024
     ]
 
-    # Try specific date label patterns first
-    label_patterns = [
-        r'(?:Invoice\s*)?(?:Date|Dated|Issue\s*Date)[\s]*[:\-\.]?\s*(.+?)(?:\n|$)',
-        r'(?:Bill\s*Date|Due\s*Date)[\s]*[:\-\.]?\s*(.+?)(?:\n|$)',
-    ]
-
-    for label_pattern in label_patterns:
-        label_match = re.search(label_pattern, text, re.IGNORECASE)
-        if label_match:
-            date_str = label_match.group(1).strip()[:30]  # Limit length
-
-            # Try parsing various date formats from the matched string
-            for date_pattern, _ in date_patterns:
-                match = re.search(date_pattern, date_str, re.IGNORECASE)
-                if match:
-                    return match.group(0).strip()
-
-    # Fall back to finding any date in the text
-    for date_pattern, _ in date_patterns:
-        match = re.search(date_pattern, text, re.IGNORECASE)
+    for pattern in date_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
         if match:
             return match.group(0).strip()
 
@@ -75,116 +57,95 @@ def extract_date(text):
 
 
 def extract_amount(text, field_type='total'):
-    """
-    Extract monetary amounts from text.
-    field_type: 'total', 'subtotal', 'tax'
-    """
+    """Extract monetary amounts with higher precision."""
     if field_type == 'total':
-        patterns = [
-            r'(?:Total\s*(?:Amount|Due|Payable)?|Grand\s*Total|Amount\s*Due|Balance\s*Due|Net\s*Amount)[\s]*[:\-\.]?\s*[\$€£₹]?\s*([\d,]+\.?\d*)',
-            r'(?:Total)[\s]*[:\-\.]?\s*[\$€£₹]?\s*([\d,]+\.?\d*)',
-        ]
+        labels = r'(?:Total|Grand\s*Total|Amount\s*Due|Balance|Payable|Net\s*Amount)'
     elif field_type == 'subtotal':
-        patterns = [
-            r'(?:Sub\s*[-\s]?\s*Total|Before\s*Tax)[\s]*[:\-\.]?\s*[\$€£₹]?\s*([\d,]+\.?\d*)',
-        ]
+        labels = r'(?:Sub\s*Total|Before\s*Tax|Taxable\s*Amount)'
     elif field_type == 'tax':
-        patterns = [
-            r'(?:Tax|VAT|GST|Sales\s*Tax|Service\s*Tax|CGST|SGST|IGST)[\s]*(?:\(\d+%?\))?[\s]*[:\-\.]?\s*[\$€£₹]?\s*([\d,]+\.?\d*)',
-        ]
-    else:
-        return "0.00"
-
-    for pattern in patterns:
-        matches = re.findall(pattern, text, re.IGNORECASE)
-        if matches:
-            # Return the largest amount found (most likely the total)
-            amounts = []
-            for m in matches:
-                try:
-                    cleaned = m.replace(',', '')
-                    amount = float(cleaned)
-                    if amount > 0:
-                        amounts.append(amount)
-                except ValueError:
-                    continue
-
-            if amounts:
-                if field_type == 'total':
-                    return f"{max(amounts):.2f}"
-                else:
-                    return f"{amounts[0]:.2f}"
-
-    return "0.00"
+        labels = r'(?:Tax|VAT|GST|Sales\s*Tax|CGST|SGST|IGST)'
+    
+    # Pattern: Label followed by currency symbol and amount
+    pattern = f'{labels}[\s]*[:\-\.]?\s*[₹\$€£]?\s*([\d,]+\.?\d*)'
+    matches = re.findall(pattern, text, re.IGNORECASE)
+    
+    if matches:
+        # Convert all matches to floats and return the most logical one
+        amounts = []
+        for m in matches:
+            try:
+                val = float(m.replace(',', ''))
+                if val > 0: amounts.append(val)
+            except: continue
+        
+        if amounts:
+            if field_type == 'total':
+                return max(amounts) # Total is usually the largest
+            return amounts[0]
+            
+    return 0.0
 
 
 def extract_vendor_name(text):
-    """
-    Extract vendor/company name from the invoice.
-    Uses heuristics: looks for 'Bill From', 'From:', or first prominent line.
-    """
-    # Try explicit vendor labels
-    vendor_patterns = [
-        r'(?:Bill\s*From|Sold\s*By|Vendor|Seller|Company|From|Supplier)[\s]*[:\-\.]?\s*(.+?)(?:\n|$)',
-        r'(?:Business\s*Name|Firm|Organization)[\s]*[:\-\.]?\s*(.+?)(?:\n|$)',
-    ]
+    """Improved vendor detection using header heuristics and common suffixes."""
+    # Suffixes that indicate a business name
+    suffixes = r'(?:Inc|Ltd|LLC|Corp|Pvt|Company|Boutique|Services|Solutions|Group|Technologies)'
+    
+    # Try finding lines with business suffixes
+    suffix_pattern = f'([A-Z][\w\s&]+ {suffixes}\.?)'
+    match = re.search(suffix_pattern, text)
+    if match: return match.group(1).strip()
 
-    for pattern in vendor_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            vendor = match.group(1).strip()
-            # Clean up: remove trailing special chars
-            vendor = re.sub(r'[,\.\|]+$', '', vendor).strip()
-            if len(vendor) >= 2 and len(vendor) <= 100:
-                return vendor
+    # Fallback: Look for "Bill From" or first prominent lines
+    labels = r'(?:Bill\s*From|From|Vendor|Supplier|Seller)'
+    pattern = f'{labels}[\s]*[:\-\.]?\s*([A-Z][\w\s&]+)'
+    match = re.search(pattern, text, re.IGNORECASE)
+    if match: return match.group(1).strip()
 
-    # Heuristic: use the first non-empty, non-numeric line
+    # Heuristic: First 3 lines that are not headers or numbers
     lines = text.split('\n')
-    for line in lines[:5]:  # Check first 5 lines
+    for line in lines[:5]:
         line = line.strip()
-        if not line:
-            continue
-        # Skip lines that are mostly numbers or dates
-        if re.match(r'^[\d\s\-\/\.\$€£₹,%]+$', line):
-            continue
-        # Skip lines that are common headers
-        if re.match(r'^\s*(invoice|bill|receipt|tax|date|page)\s*', line, re.IGNORECASE):
-            continue
-        # Likely a company name
-        if len(line) >= 3 and len(line) <= 80:
-            return line.strip()
+        if len(line) > 3 and not re.match(r'^(Invoice|Bill|Date|#|\d)', line, re.IGNORECASE):
+            return line
 
     return "Unknown Vendor"
 
 
 def parse_invoice(raw_text):
     """
-    Main parsing function: extract all fields from raw OCR text.
-    Returns a structured dictionary.
+    Advanced parsing with mathematical cross-verification.
     """
-    if not raw_text or len(raw_text.strip()) < 5:
-        return {
-            'invoice_number': 'N/A',
-            'date': 'N/A',
-            'vendor': 'Unknown',
-            'subtotal': '0.00',
-            'tax': '0.00',
-            'total': '0.00',
-            'raw_text': raw_text or '',
-            'status': 'error',
-            'message': 'Insufficient text extracted from document'
-        }
+    if not raw_text or len(raw_text.strip()) < 10:
+        return {'status': 'error', 'message': 'Low text quality'}
 
-    result = {
-        'invoice_number': extract_invoice_number(raw_text),
-        'date': extract_date(raw_text),
-        'vendor': extract_vendor_name(raw_text),
-        'subtotal': extract_amount(raw_text, 'subtotal'),
-        'tax': extract_amount(raw_text, 'tax'),
-        'total': extract_amount(raw_text, 'total'),
+    # 1. Primary Extraction
+    vendor = extract_vendor_name(raw_text)
+    inv_num = extract_invoice_number(raw_text)
+    date = extract_date(raw_text)
+    
+    # 2. Amount Extraction
+    total = extract_amount(raw_text, 'total')
+    subtotal = extract_amount(raw_text, 'subtotal')
+    tax = extract_amount(raw_text, 'tax')
+
+    # 3. Mathematical Verification (Subtotal + Tax = Total)
+    # If the math adds up, we can be extremely confident
+    if subtotal > 0 and tax > 0 and abs((subtotal + tax) - total) < 0.1:
+        confidence = 0.99
+    elif total > 0:
+        confidence = 0.85
+    else:
+        confidence = 0.5
+
+    return {
+        'invoice_number': inv_num,
+        'date': date,
+        'vendor': vendor,
+        'subtotal': f"{subtotal:.2f}",
+        'tax': f"{tax:.2f}",
+        'total': f"{total:.2f}",
+        'confidence': confidence,
         'raw_text': raw_text,
-        'status': 'success',
-        'message': 'Invoice parsed successfully'
+        'status': 'success'
     }
-
-    return result
