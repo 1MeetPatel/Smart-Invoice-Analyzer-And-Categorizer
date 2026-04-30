@@ -57,64 +57,79 @@ def extract_date(text):
 
 
 def extract_amount(text, field_type='total'):
-    """Extract monetary amounts with higher precision."""
+    """Extract monetary amounts with higher precision and contextual fallback."""
     if field_type == 'total':
-        labels = r'(?:Total|Grand\s*Total|Amount\s*Due|Balance|Payable|Net\s*Amount)'
+        labels = r'(?:Total|Grand\s*Total|Amount\s*Due|Balance|Payable|Net\s*Amount|Total\s*Incl\s*VAT)'
     elif field_type == 'subtotal':
-        labels = r'(?:Sub\s*Total|Before\s*Tax|Taxable\s*Amount)'
+        labels = r'(?:Sub\s*Total|Before\s*Tax|Taxable\s*Amount|Total\s*Excl\s*VAT)'
     elif field_type == 'tax':
-        labels = r'(?:Tax|VAT|GST|Sales\s*Tax|CGST|SGST|IGST)'
+        labels = r'(?:Tax|VAT|GST|Sales\s*Tax|CGST|SGST|IGST|Taxes)'
     
-    # Pattern: Label followed by currency symbol and amount
-    pattern = f'{labels}[\s]*[:\-\.]?\s*[₹\$€£]?\s*([\d,]+\.?\d*)'
+    # Pattern: Label followed by currency symbol and amount (supports multi-line gaps)
+    pattern = f'{labels}[\s]*[:\-\.]?[\s]*[₹\$€£]?[\s]*([\d,]+\.?\d*)'
     matches = re.findall(pattern, text, re.IGNORECASE)
     
+    amounts = []
     if matches:
-        # Convert all matches to floats and return the most logical one
-        amounts = []
         for m in matches:
             try:
-                val = float(m.replace(',', ''))
+                # Handle cases like "1.234,56" vs "1,234.56"
+                clean_m = m.replace(',', '')
+                if '.' in m and m.rfind('.') < m.rfind(','): # European format 1.234,56
+                     clean_m = m.replace('.', '').replace(',', '.')
+                
+                val = float(clean_m)
                 if val > 0: amounts.append(val)
             except: continue
-        
-        if amounts:
-            if field_type == 'total':
-                return max(amounts) # Total is usually the largest
-            return amounts[0]
+    
+    if amounts:
+        if field_type == 'total':
+            return max(amounts)
+        return amounts[0]
+
+    # Fallback for Total: Look for the largest number in the document (usually at the bottom)
+    if field_type == 'total':
+        all_nums = re.findall(r'[₹\$€£]?\s*([\d,]+\.\d{2})\b', text)
+        if all_nums:
+            vals = []
+            for n in all_nums:
+                try: vals.append(float(n.replace(',', '')))
+                except: pass
+            if vals: return max(vals)
             
     return 0.0
 
 
 def extract_vendor_name(text):
     """Improved vendor detection using header heuristics and common suffixes."""
-    # Suffixes that indicate a business name
-    suffixes = r'(?:Inc|Ltd|LLC|Corp|Pvt|Company|Boutique|Services|Solutions|Group|Technologies)'
-    
-    # Try finding lines with business suffixes
-    suffix_pattern = f'([A-Z][\w\s&]+ {suffixes}\.?)'
-    match = re.search(suffix_pattern, text)
+    # 1. Look for obvious Business Suffixes
+    suffixes = r'(?:Inc|Ltd|LLC|Corp|Pvt|Company|Boutique|Services|Solutions|Group|Technologies|Associates|Enterprises|Limited|Corporation|PLC)'
+    suffix_pattern = f'([A-Z0-9][\w\s&]{{2,40}}\s{suffixes}\.?)'
+    match = re.search(suffix_pattern, text, re.IGNORECASE)
     if match: return match.group(1).strip()
 
-    # Fallback: Look for "Bill From" or first prominent lines
-    labels = r'(?:Bill\s*From|From|Vendor|Supplier|Seller)'
-    pattern = f'{labels}[\s]*[:\-\.]?\s*([A-Z][\w\s&]+)'
+    # 2. Look for common labels
+    labels = r'(?:Bill\s*From|From|Vendor|Supplier|Seller|Sold\s*By)'
+    pattern = f'{labels}[\s]*[:\-\.]?\s*([A-Z0-9][\w\s&]{{2,40}})'
     match = re.search(pattern, text, re.IGNORECASE)
     if match: return match.group(1).strip()
 
-    # Heuristic: First 3 lines that are not headers or numbers
+    # 3. First 3 non-numeric lines in the header
     lines = text.split('\n')
-    for line in lines[:5]:
+    noise = ['invoice', 'bill', 'date', 'phone', 'tel', 'email', 'website', 'tax', 'address', 'gstin', 'pan']
+    for line in lines[:8]:
         line = line.strip()
-        if len(line) > 3 and not re.match(r'^(Invoice|Bill|Date|#|\d)', line, re.IGNORECASE):
-            return line
+        if len(line) > 3 and not any(n in line.lower() for n in noise) and not re.match(r'^\d', line):
+            # Check if line looks like a title (Capital letters mostly)
+            if sum(1 for c in line if c.isupper()) >= 1:
+                return line
 
     return "Unknown Vendor"
 
 
 def parse_invoice(raw_text):
     """
-    Advanced parsing with mathematical cross-verification.
+    Advanced parsing with mathematical cross-verification and reconstruction.
     """
     if not raw_text or len(raw_text.strip()) < 10:
         return {'status': 'error', 'message': 'Low text quality'}
@@ -129,14 +144,22 @@ def parse_invoice(raw_text):
     subtotal = extract_amount(raw_text, 'subtotal')
     tax = extract_amount(raw_text, 'tax')
 
-    # 3. Mathematical Verification (Subtotal + Tax = Total)
-    # If the math adds up, we can be extremely confident
-    if subtotal > 0 and tax > 0 and abs((subtotal + tax) - total) < 0.1:
-        confidence = 0.99
-    elif total > 0:
-        confidence = 0.85
-    else:
-        confidence = 0.5
+    # 3. Mathematical Reconstruction
+    # If subtotal and tax are missing but total exists, tax might be 0 or hidden
+    if total > 0 and subtotal == 0:
+        subtotal = total - tax
+    if total > 0 and tax == 0 and subtotal < total:
+        tax = total - subtotal
+
+    # 4. Confidence Scoring
+    confidence = 0.5
+    if total > 0: confidence += 0.2
+    if vendor != "Unknown Vendor": confidence += 0.1
+    if date != "N/A": confidence += 0.1
+    
+    # Bonus for math verification
+    if subtotal > 0 and tax >= 0 and abs((subtotal + tax) - total) < 0.1:
+        confidence = 0.98
 
     return {
         'invoice_number': inv_num,
