@@ -755,10 +755,18 @@ function showToast(message, type = 'info') {
     toast.className = `toast ${type}`;
     toast.textContent = message;
     container.appendChild(toast);
+    
+    // Trigger entry animation
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+    
+    // Auto-dismiss
     setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
+        toast.classList.remove('show');
+        // Wait for exit animation to finish before removing from DOM
+        setTimeout(() => toast.remove(), 600);
+    }, 4000);
 }
 
 window.showPage = function(page) {
