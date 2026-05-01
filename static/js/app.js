@@ -27,6 +27,7 @@ const DOM = {
     exportCsvBtn: document.getElementById('export-csv-btn'),
     navLinks: document.querySelectorAll('.header-nav-link'),
     pageViews: document.querySelectorAll('.page-view'),
+    themeToggle: document.getElementById('theme-toggle'),
     // Reports Dashboard
     reportEmptyState: document.getElementById('reports-empty-state'),
     reportActiveContent: document.getElementById('reports-active-content'),
@@ -48,9 +49,60 @@ document.addEventListener('DOMContentLoaded', () => {
     initUploadZone();
     initButtons();
     initNavigation();
+    initTheme();
     initCharts();
     checkHealth();
 });
+
+// ========================
+// Theme Management
+// ========================
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    if (DOM.themeToggle) {
+        DOM.themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateChartTheme(newTheme);
+        });
+    }
+}
+
+function updateChartTheme(theme) {
+    const textColor = theme === 'dark' ? '#f8fafc' : '#475569';
+    const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.05)';
+    
+    Chart.defaults.color = textColor;
+    
+    Object.values(state.charts).forEach(chart => {
+        if (!chart) return;
+        
+        if (chart.options.scales) {
+            if (chart.options.scales.x) {
+                chart.options.scales.x.ticks.color = textColor;
+                if (chart.options.scales.x.grid) chart.options.scales.x.grid.color = gridColor;
+            }
+            if (chart.options.scales.y) {
+                chart.options.scales.y.ticks.color = textColor;
+                if (chart.options.scales.y.grid) chart.options.scales.y.grid.color = gridColor;
+            }
+        }
+        
+        if (chart.options.plugins && chart.options.plugins.legend) {
+            chart.options.plugins.legend.labels.color = textColor;
+        }
+        
+        chart.update('none');
+    });
+}
 
 function initUploadZone() {
     // File input change
