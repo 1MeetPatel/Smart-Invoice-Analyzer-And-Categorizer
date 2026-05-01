@@ -513,7 +513,7 @@ function renderHeatmap(data) {
             cell.style.backgroundColor = `rgba(99, 102, 241, ${opacity})`;
             
             if (val > 0) {
-                cell.title = `${dept}: ₹${val.toLocaleString()}`;
+                cell.title = `${dept}: ${val.toLocaleString()}`;
             } else {
                 cell.title = `${dept}: No data`;
             }
