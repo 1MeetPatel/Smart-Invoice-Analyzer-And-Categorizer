@@ -260,6 +260,11 @@ function getCategoryBadgeClass(cat) {
 // ========================
 // ========================
 function initCharts() {
+    // Global Chart.js Defaults for Smoothness
+    Chart.defaults.animation.duration = 1500;
+    Chart.defaults.animation.easing = 'easeOutQuart';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -677,3 +682,5 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+

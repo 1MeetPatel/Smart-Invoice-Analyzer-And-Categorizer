@@ -240,11 +240,9 @@ body {
     border-radius: 28px;
     padding: 90px 40px;
     text-align: center;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
     background: #ffffff;
-    
-    -webkit-
     position: relative;
     overflow: hidden;
 }
@@ -255,17 +253,17 @@ body {
     inset: 0;
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(168, 85, 247, 0.03) 100%);
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.6s ease;
     pointer-events: none;
 }
 
+.card:hover .upload-dropzone,
 .upload-dropzone:hover {
     border-color: var(--accent-color);
-    background: rgba(255, 255, 255, 0.6);
-    transform: translateY(-4px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.8);
 }
 
+.card:hover .upload-dropzone::before,
 .upload-dropzone:hover::before {
     opacity: 1;
 }
@@ -289,15 +287,14 @@ body {
     justify-content: center;
     margin: 0 auto 32px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.upload-dropzone:hover .upload-icon-box {
-    transform: translateY(-8px) rotate(8deg);
-    color: var(--accent-hover);
-    box-shadow: 0 20px 35px -8px rgba(99, 102, 241, 0.2);
-    border-color: var(--accent-soft);
+.card:hover .upload-icon-box {
+    transform: rotate(6deg);
+    background: white;
+    box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.2);
 }
 
 .upload-text {
@@ -1164,3 +1161,35 @@ html {
 .header-nav-link.active {
     color: white !important;
 }
+
+/* --- Even More Buttery Smoothness --- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.15); border-radius: 10px; transition: background 0.3s; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
+
+/* Static Card Physics (No Bounce) */
+.card, .chart-card-box, .metric-card {
+    transition: box-shadow 0.3s ease !important;
+}
+
+.card:hover, .chart-card-box:hover, .metric-card:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01) !important;
+}
+
+/* Table Row Entrance */
+.fade-in-row {
+    animation: rowReveal 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes rowReveal {
+    from { opacity: 0; transform: translateX(-15px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Button Ripple-like Effect on Click */
+.btn-choose:active, .btn-csv:active, .header-nav-link:active {
+    transform: scale(0.94) translateY(2px) !important;
+    filter: brightness(0.9);
+}
+
