@@ -1280,12 +1280,15 @@ html {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 8px;
+    padding: 0 4px; /* Reduced to match thumb offset */
+    overflow: hidden; /* Keep thumb shadow inside the capsule */
+    border-radius: 100px;
 }
 
 .controller-thumb {
     position: absolute;
     left: 4px;
+    top: 3px; /* Centered vertically (44 - 36) / 2 - 1 for border */
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -1297,17 +1300,17 @@ html {
 [data-theme="light"] .controller-thumb {
     transform: translateX(0);
     background: linear-gradient(135deg, #f59e0b, #fbbf24);
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
-[data-theme="light"] .controller-icon.sun { color: white; transform: scale(1.1) rotate(0); opacity: 1; }
+[data-theme="light"] .controller-icon.sun { color: white; transform: scale(1.1); opacity: 1; }
 [data-theme="light"] .controller-icon.moon { color: var(--text-muted); opacity: 0.3; transform: scale(0.9); }
 
 /* Dark Mode: Electric Indigo Glow */
 [data-theme="dark"] .controller-thumb {
-    transform: translateX(42px);
+    transform: translateX(38px); /* Reduced from 42px to keep it inside the padding */
     background: linear-gradient(135deg, #818cf8, #6366f1);
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 [data-theme="dark"] .controller-icon.moon { color: white; transform: scale(1.1) rotate(0); opacity: 1; }
