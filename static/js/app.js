@@ -59,6 +59,11 @@ function initUploadZone() {
         e.target.value = '';
     });
 
+    // Click to upload
+    DOM.uploadZone.addEventListener('click', () => {
+        DOM.fileInput.click();
+    });
+
     // Drag & Drop
     DOM.uploadZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -333,6 +338,28 @@ function initCharts() {
             }
         }
     });
+
+    // 5. Expense by Department (Horizontal Bar)
+    state.charts.departments = new Chart(document.getElementById('chart-department-bars'), {
+        type: 'bar',
+        data: {
+            labels: ['Sales', 'Marketing', 'Operations', 'Finance', 'HR'],
+            datasets: [{
+                data: [0, 0, 0, 0, 0],
+                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                borderRadius: 6,
+                barThickness: 24
+            }]
+        },
+        options: {
+            ...commonOptions,
+            indexAxis: 'y',
+            scales: {
+                x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#94a3b8' } },
+                y: { grid: { display: false }, ticks: { color: '#475569', font: { weight: '600' } } }
+            }
+        }
+    });
 }
 
 function updateReports() {
@@ -351,8 +378,12 @@ function updateReports() {
     let totalConf = 0;
     const catMap = {};
     const vendorMap = {};
-    const monthlySpend = Array(6).fill(0); // Jan to Jun
+    const monthlySpend = Array(12).fill(0); // Jan to Dec
     
+    const deptMap = { 'Sales': 0, 'Marketing': 0, 'Operations': 0, 'Finance': 0, 'HR': 0 };
+    const heatmapData = {};
+    ['Sales', 'Marketing', 'Operations', 'Finance', 'HR'].forEach(d => heatmapData[d] = Array(12).fill(0));
+
     state.results.forEach(r => {
         const amt = parseAmount(r.total);
         const tax = parseAmount(r.tax);
@@ -365,17 +396,23 @@ function updateReports() {
         const cat = r.category || 'Other';
         catMap[cat] = (catMap[cat] || 0) + amt;
 
+        const dept = getDepartment(cat);
+        deptMap[dept] += amt;
+
         const vend = r.vendor || 'Unknown';
         vendorMap[vend] = (vendorMap[vend] || { amt: 0, count: 0 });
         vendorMap[vend].amt += amt;
         vendorMap[vend].count += 1;
 
-        // Extract month for trend
+        // Extract month for trend and heatmap
         if (r.date) {
             const dateParts = r.date.split('/');
             if (dateParts.length >= 2) {
                 const monthIdx = parseInt(dateParts[0]) - 1; // Assume MM/DD/YYYY
-                if (monthIdx >= 0 && monthIdx < 6) monthlySpend[monthIdx] += amt;
+                if (monthIdx >= 0 && monthIdx < 12) {
+                    monthlySpend[monthIdx] += amt;
+                    heatmapData[dept][monthIdx] += amt;
+                }
             }
         }
     });
@@ -414,6 +451,102 @@ function updateReports() {
     state.charts.vendors.data.labels = topVendors.map(v => v[0]);
     state.charts.vendors.data.datasets[0].data = topVendors.map(v => v[1].amt);
     state.charts.vendors.update();
+
+    // Department Chart
+    state.charts.departments.data.datasets[0].data = ['Sales', 'Marketing', 'Operations', 'Finance', 'HR'].map(d => deptMap[d]);
+    state.charts.departments.update();
+
+    // Heatmap
+    renderHeatmap(heatmapData);
+}
+
+function getDepartment(category) {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('sales')) return 'Sales';
+    if (cat.includes('marketing') || cat.includes('advertis')) return 'Marketing';
+    if (cat.includes('it') || cat.includes('software') || cat.includes('utilit') || cat.includes('travel')) return 'Operations';
+    if (cat.includes('office') || cat.includes('supplies') || cat.includes('profess')) return 'Finance';
+    return 'HR';
+}
+
+function renderHeatmap(data) {
+    const container = document.getElementById('expense-heatmap');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const depts = ['Marketing', 'Operations', 'Sales', 'Finance', 'HR'];
+    
+    // Create Main Grid Wrapper (to separate from Legend)
+    const heatmapMain = document.createElement('div');
+    heatmapMain.className = 'heatmap-main-content';
+
+    // Find max value for scaling colors
+    let maxVal = 0;
+    depts.forEach(d => {
+        if (data[d]) {
+            data[d].forEach(v => { if(v > maxVal) maxVal = v; });
+        }
+    });
+    if (maxVal === 0) maxVal = 1;
+
+    // 1. Grid Rows
+    depts.forEach(dept => {
+        const row = document.createElement('div');
+        row.className = 'heatmap-row';
+        
+        const label = document.createElement('div');
+        label.className = 'heatmap-label';
+        label.textContent = dept;
+        row.appendChild(label);
+
+        const cells = document.createElement('div');
+        cells.className = 'heatmap-cells';
+
+        const deptData = data[dept] || Array(12).fill(0);
+        deptData.forEach(val => {
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell';
+            
+            // Calculate opacity based on value
+            const opacity = val === 0 ? 0.03 : 0.1 + (val / maxVal) * 0.9;
+            cell.style.backgroundColor = `rgba(99, 102, 241, ${opacity})`;
+            
+            if (val > 0) {
+                cell.title = `${dept}: ₹${val.toLocaleString()}`;
+            } else {
+                cell.title = `${dept}: No data`;
+            }
+            
+            cells.appendChild(cell);
+        });
+
+        row.appendChild(cells);
+        heatmapMain.appendChild(row);
+    });
+
+    // 2. Month Labels at Bottom
+    const monthRow = document.createElement('div');
+    monthRow.className = 'heatmap-months-row';
+    months.forEach(m => {
+        const tag = document.createElement('div');
+        tag.className = 'heatmap-month-tag';
+        tag.textContent = m;
+        monthRow.appendChild(tag);
+    });
+    heatmapMain.appendChild(monthRow);
+
+    container.appendChild(heatmapMain);
+
+    // 3. Legend on the right
+    const legend = document.createElement('div');
+    legend.className = 'heatmap-legend';
+    legend.innerHTML = `
+        <span class="legend-text">High</span>
+        <div class="legend-bar"></div>
+        <span class="legend-text">Low</span>
+    `;
+    container.appendChild(legend);
 }
 
 function parseAmount(amt) {
@@ -476,6 +609,11 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 500);
     }, 3000);
 }
+
+window.showPage = function(page) {
+    const link = document.querySelector(`.header-nav-link[data-page="${page}"]`);
+    if (link) link.click();
+};
 
 function escapeHtml(str) {
     if (!str) return '';

@@ -59,14 +59,14 @@
                         
                         <div class="upload-dropzone" id="upload-zone">
                             <div class="upload-icon-box">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                                 </svg>
                             </div>
                             <p class="upload-text">Drag & drop your invoice here</p>
-                            <p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 0.8rem;">or</p>
-                            <button class="btn-choose" onclick="document.getElementById('file-input').click()">Choose File</button>
-                            <p class="upload-footer">Supported formats: PDF, JPG, PNG, TIFF</p>
+                            <p style="margin-bottom: 24px; color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">or</p>
+                            <button class="btn-choose">Choose File</button>
+                            <p class="upload-footer" style="margin-top: 32px; font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Supported formats: PDF, JPG, PNG, TIFF</p>
                             <input type="file" id="file-input" hidden multiple accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif">
                         </div>
                     </div>
@@ -112,10 +112,16 @@
             <div id="reports-view" class="page-view">
                 <!-- Empty State -->
                 <div id="reports-empty-state" class="reports-empty">
-                    <div class="empty-icon">📊</div>
+                    <div class="empty-icon-wrapper">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="6" y1="20" x2="6" y2="16"></line>
+                        </svg>
+                    </div>
                     <h2>Awaiting Financial Data</h2>
                     <p>Upload invoices in the Dashboard to generate real-time spending insights and visual reports.</p>
-                    <button class="btn-choose" onclick="showPage('dashboard')" style="margin-top: 24px;">Go to Dashboard</button>
+                    <button class="btn-choose" onclick="showPage('dashboard')" style="margin-top: 32px;">Go to Dashboard</button>
                 </div>
 
                 <!-- Active Report State -->
@@ -174,6 +180,18 @@
                                 <h3 class="chart-box-title">Top Vendors by Spend</h3>
                                 <div class="chart-canvas-wrapper">
                                     <canvas id="chart-vendor-bars"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card-box">
+                                <h3 class="chart-box-title">Expense by Department</h3>
+                                <div class="chart-canvas-wrapper">
+                                    <canvas id="chart-department-bars"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card-box span-2">
+                                <h3 class="chart-box-title">Expense Heatmap</h3>
+                                <div class="heatmap-container" id="expense-heatmap">
+                                    <!-- Dynamic Heatmap Content -->
                                 </div>
                             </div>
                         </div>
