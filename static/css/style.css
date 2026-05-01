@@ -120,14 +120,7 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
-    text-decoration: none;
-    transition: transform 0.2s;
-}
-
-.header-logo:hover { transform: scale(1.02); }
-
-.header-logo svg {
-    filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.3));
+    user-select: none;
 }
 
 .logo-text-bold {
