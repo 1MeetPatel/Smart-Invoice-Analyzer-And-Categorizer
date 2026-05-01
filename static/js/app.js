@@ -27,7 +27,7 @@ const DOM = {
     exportCsvBtn: document.getElementById('export-csv-btn'),
     navLinks: document.querySelectorAll('.header-nav-link'),
     pageViews: document.querySelectorAll('.page-view'),
-    themeToggle: document.getElementById('theme-toggle'),
+    themeController: document.getElementById('theme-controller'),
     // Reports Dashboard
     reportEmptyState: document.getElementById('reports-empty-state'),
     reportActiveContent: document.getElementById('reports-active-content'),
@@ -64,16 +64,54 @@ function initTheme() {
     const theme = savedTheme || (prefersDark ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', theme);
     
-    if (DOM.themeToggle) {
-        DOM.themeToggle.addEventListener('click', () => {
+    if (DOM.themeController) {
+        DOM.themeController.addEventListener('click', (e) => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateChartTheme(newTheme);
+            // Create cinematic wash effect
+            createThemeWash(e, newTheme);
+            
+            // Short delay to let the wash start before changing colors
+            setTimeout(() => {
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateChartTheme(newTheme);
+            }, 50);
         });
     }
+}
+
+function createThemeWash(e, targetTheme) {
+    const wash = document.createElement('div');
+    wash.className = 'theme-wash';
+    
+    // Position at click or center of controller
+    const rect = DOM.themeController.getBoundingClientRect();
+    const x = e ? e.clientX : rect.left + rect.width / 2;
+    const y = e ? e.clientY : rect.top + rect.height / 2;
+    
+    wash.style.left = `${x}px`;
+    wash.style.top = `${y}px`;
+    
+    // Set color based on target theme
+    if (targetTheme === 'dark') {
+        wash.style.background = 'rgba(15, 23, 42, 0.4)';
+    } else {
+        wash.style.background = 'rgba(255, 255, 255, 0.4)';
+    }
+    
+    document.body.appendChild(wash);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+        wash.classList.add('active');
+    });
+    
+    // Cleanup
+    setTimeout(() => {
+        wash.remove();
+    }, 1000);
 }
 
 function updateChartTheme(theme) {

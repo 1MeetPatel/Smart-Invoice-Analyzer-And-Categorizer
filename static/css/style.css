@@ -1237,53 +1237,107 @@ html {
 }
 
 /* Theme Toggle Button */
-#theme-toggle {
+/* Premium Theme Controller Capsule */
+.theme-controller {
     background: var(--card-bg);
-    color: var(--text-secondary);
     border: 1px solid var(--border-color);
-    width: 44px;
+    width: 86px;
     height: 44px;
+    border-radius: 100px;
+    padding: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: var(--shadow-soft), inset 0 2px 4px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+}
+
+.theme-controller:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-premium), inset 0 2px 4px rgba(0,0,0,0.02);
+    border-color: var(--accent-color);
+}
+
+.controller-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+}
+
+.controller-thumb {
+    position: absolute;
+    left: 4px;
+    width: 36px;
+    height: 36px;
+    background: var(--accent-color);
     border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 1;
+}
+
+.controller-icon {
+    position: relative;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    width: 36px;
+    height: 36px;
+    color: var(--text-muted);
+    transition: all 0.4s ease;
+    pointer-events: none;
 }
 
-#theme-toggle:hover {
-    transform: scale(1.08);
-    border-color: var(--accent-color);
-    color: var(--accent-color);
+.controller-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5px;
 }
 
-#theme-toggle svg {
-    width: 20px;
-    height: 20px;
+/* Theme Specific Controller States */
+[data-theme="light"] .controller-thumb {
+    transform: translateX(0);
+    background: #f59e0b; /* Golden Sun color */
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="light"] .controller-icon.sun { color: white; transform: scale(1.1); }
+[data-theme="light"] .controller-icon.moon { color: var(--text-muted); opacity: 0.5; }
+
+[data-theme="dark"] .controller-thumb {
+    transform: translateX(42px);
+    background: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+[data-theme="dark"] .controller-icon.moon { color: white; transform: scale(1.1); }
+[data-theme="dark"] .controller-icon.sun { color: var(--text-muted); opacity: 0.5; }
+
+/* Ambient Aura Glow */
+.theme-controller::after {
+    content: '';
     position: absolute;
-    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+    inset: -2px;
+    border-radius: 100px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    background: radial-gradient(circle, var(--accent-color), transparent 70%);
+    filter: blur(8px);
 }
 
-/* Light Mode: Moon visible, Sun hidden */
-[data-theme="light"] #theme-toggle .sun-icon {
-    opacity: 0;
-    transform: rotate(90deg) scale(0);
-}
-[data-theme="light"] #theme-toggle .moon-icon {
-    opacity: 1;
-    transform: rotate(0) scale(1);
+.theme-controller:hover::after {
+    opacity: 0.15;
 }
 
-/* Dark Mode: Sun visible, Moon hidden */
-[data-theme="dark"] #theme-toggle .sun-icon {
-    opacity: 1;
-    transform: rotate(0) scale(1);
-}
-[data-theme="dark"] #theme-toggle .moon-icon {
-    opacity: 0;
-    transform: rotate(-90deg) scale(0);
+[data-theme="light"] .theme-controller:hover::after {
+    background: radial-gradient(circle, #f59e0b, transparent 70%);
 }
 
 /* Smooth Theme Transition for All Elements */
@@ -1292,6 +1346,9 @@ html {
 .header, .btn-csv, .user-profile,
 .upload-dropzone,
 .toast, .data-table th, .data-table td,
-.reports-empty, .category-tag, .status-badge {
-    transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease !important;
+.reports-empty, .category-tag, .status-badge, .theme-controller {
+    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
