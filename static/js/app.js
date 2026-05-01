@@ -1,5 +1,5 @@
 /**
- * Smart Invoice Analyzer — Frontend Application
+ * Invocify — Frontend Application
  * Handles file upload, processing, results display, and CSV export.
  */
 
