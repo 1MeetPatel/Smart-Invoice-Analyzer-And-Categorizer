@@ -1,5 +1,5 @@
 """
-Smart Invoice Analyzer and Categorizer
+Invocify — AI Financial Intelligence
 Flask Backend Application
 """
 
@@ -218,7 +218,7 @@ def health_check():
 
 if __name__ == '__main__':
     print("\n" + "=" * 55)
-    print("  Smart Invoice Analyzer and Categorizer")
+    print("  Invocify — Professional AI Financial Intelligence")
     print("  Running at: http://localhost:5000")
     print("=" * 55 + "\n")
     app.run(debug=True, host='0.0.0.0', port=5000)

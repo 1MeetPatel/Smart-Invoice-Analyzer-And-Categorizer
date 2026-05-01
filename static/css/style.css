@@ -188,6 +188,15 @@ body {
     border: 1px solid rgba(129, 140, 248, 0.2);
 }
 
+.btn-csv:focus {
+    outline: none;
+}
+
+.btn-csv:active {
+    transform: scale(0.97) translateY(1px);
+    transition: transform 0.1s ease;
+}
+
 .btn-csv:hover {
     background: var(--accent-color);
     color: white;
@@ -1167,12 +1176,12 @@ html {
 }
 
 /* Premium Button Physics */
-.btn-choose, .btn-csv, .header-nav-link {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+.btn-choose, .header-nav-link {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn-choose:active, .btn-csv:active {
-    transform: scale(0.92) !important;
+.btn-choose:active {
+    transform: scale(0.96);
 }
 
 /* --- OVERRIDE FOR BUTTERY SMOOTH NAV --- */
@@ -1241,9 +1250,9 @@ html {
 }
 
 /* Button Ripple-like Effect on Click */
-.btn-choose:active, .btn-csv:active, .header-nav-link:active {
-    transform: scale(0.94) translateY(2px) !important;
-    filter: brightness(0.9);
+.btn-choose:active, .header-nav-link:active {
+    transform: scale(0.96) translateY(1px);
+    filter: brightness(0.95);
 }
 
 /* Theme Toggle Button */
