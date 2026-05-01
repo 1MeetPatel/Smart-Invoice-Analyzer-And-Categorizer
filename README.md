@@ -1,112 +1,58 @@
-# Smart Invoice Analyzer & Categorizer
+# 💎 Invocify — AI-Powered Financial Intelligence
 
-A web-based system that automatically extracts, processes, and categorizes invoice data from uploaded files using OCR technology, and generates structured CSV files for easy analysis.
+**Invocify** is a state-of-the-art, high-fidelity invoice analyzer designed to transform raw financial documents into actionable insights. Leveraging advanced OCR technology and a premium glassmorphic interface, Invocify automates the extraction, categorization, and visualization of invoice data with surgical precision.
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python)
-![Flask](https://img.shields.io/badge/Flask-3.1-green?logo=flask)
-![Tesseract](https://img.shields.io/badge/Tesseract-OCR-orange)
+![Invocify Dashboard Mockup](https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=1200)
 
-## Features
+## 🚀 Key Features
 
-- **Multi-format Upload** — PDF, JPG, PNG, TIFF with drag & drop
-- **OCR Text Extraction** — Powered by Tesseract with image preprocessing
-- **Smart Parsing** — Regex-based extraction of invoice number, date, vendor, amounts
-- **Auto Categorization** — Rule-based expense classification (10+ categories)
-- **Inline Editing** — Edit extracted data before exporting
-- **CSV Export** — Download structured data with one click
-- **Premium UI** — Dark glassmorphic design with animations
+- **Advanced OCR Extraction**: Surgical data extraction from PDF, JPG, PNG, and TIFF invoices using Tesseract.
+- **Intelligent Categorization**: Automatically groups expenses into categories (Utilities, Software, Rent, etc.) for better financial tracking.
+- **Cinematic Glassmorphic UI**: A premium, hardware-inspired interface featuring immersive theme transitions and real-time feedback.
+- **Interactive Analytics**: Deep financial insights via Chart.js visualizations, including spending trends and category distributions.
+- **Universal Export**: One-click high-fidelity CSV export for seamless integration with accounting software.
+- **Dynamic Theme Engine**: Immersive Light/Dark mode controller with cinematic "Theme Wash" transitions.
 
-## Tech Stack
+## 🛠️ Technology Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Frontend | HTML, CSS, JavaScript |
-| Backend | Python (Flask) |
-| OCR Engine | Tesseract OCR |
-| Image Processing | OpenCV, Pillow |
-| PDF Handling | PyPDF2, pdf2image |
+- **Backend**: Python, Flask
+- **OCR Engine**: Tesseract OCR
+- **Frontend**: Vanilla JS, HTML5, CSS3 (Glassmorphism)
+- **Data Visualization**: Chart.js
+- **Styling**: Pure CSS with Custom Design Tokens
 
-## Prerequisites
+## 📦 Installation & Setup
 
-### 1. Python 3.8+
-Download from [python.org](https://www.python.org/downloads/)
+### Prerequisites
+- Python 3.9+
+- Tesseract OCR installed on your system
 
-### 2. Tesseract OCR
-1. Download the installer from [UB Mannheim](https://github.com/UB-Mannheim/tesseract/wiki)
-2. Install to default path: `C:\Program Files\Tesseract-OCR\`
-3. Verify: open CMD and run `tesseract --version`
-
-### 3. Poppler (Optional — for PDF OCR)
-Required only if your PDFs are scanned images (not text-based).
-1. Download from [poppler releases](https://github.com/oschwartz10612/poppler-windows/releases)
-2. Extract to `C:\Program Files\poppler\`
-3. Add `C:\Program Files\poppler\Library\bin` to your PATH
-
-## Quick Start
-
-### Option 1: Run Script (Recommended)
+### 1. Clone the Repository
 ```bash
-run.bat
+git clone https://github.com/1MeetPatel/Smart-Invoice-Analyzer-And-Categorizer.git
+cd Smart-Invoice-Analyzer-And-Categorizer
 ```
 
-### Option 2: Manual Setup
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
+```
+
+### 3. Tesseract Configuration
+Ensure Tesseract is in your system PATH or configure the path in `app.py`:
+```python
+# app.py
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+```
+
+### 4. Run Locally
+```bash
 python app.py
 ```
+Visit `http://localhost:5000` to experience Invocify.
 
-Then open **http://localhost:5000** in your browser.
+## 🎨 Design Philosophy
+Invocify is built on the principle of **Premium Visibility**. Every component—from the sliding theme controller to the glassmorphic download buttons—is designed to provide a high-end, hardware-like interactive experience.
 
-## Usage
-
-1. **Upload** — Drag & drop invoice files or click to browse
-2. **Process** — Click "Process All Invoices" to run OCR
-3. **Review** — Check extracted data in the results table
-4. **Edit** — Click any cell to correct extracted values
-5. **Export** — Click "Export CSV" to download structured data
-
-## Project Structure
-
-```
-├── app.py              # Flask backend server
-├── ocr_engine.py       # Image preprocessing + OCR extraction
-├── parser.py           # Regex-based field extraction
-├── categorizer.py      # Rule-based expense categorization
-├── csv_generator.py    # CSV file generation
-├── requirements.txt    # Python dependencies
-├── run.bat             # One-click launcher
-├── templates/
-│   └── index.html      # Main web page
-├── static/
-│   ├── css/style.css   # Premium dark UI
-│   └── js/app.js       # Frontend logic
-├── uploads/            # Temporary uploaded files
-└── exports/            # Generated CSV files
-```
-
-## Expense Categories
-
-| Category | Example Keywords |
-|----------|-----------------|
-| Utilities | electricity, water, internet, phone |
-| Office Supplies | paper, ink, printer, stationery |
-| Travel & Transport | flight, hotel, taxi, fuel |
-| Food & Dining | restaurant, grocery, catering |
-| Software & IT | license, subscription, hosting, cloud |
-| Professional Services | consulting, legal, accounting |
-| Marketing & Advertising | ads, campaign, social media |
-| Maintenance & Repairs | repair, cleaning, plumbing |
-| Insurance | premium, policy, coverage |
-| Medical & Healthcare | hospital, pharmacy, dental |
-
-## Future Enhancements
-
-- [ ] Machine learning-based categorization
-- [ ] Multi-language invoice support
-- [ ] Integration with accounting tools (QuickBooks, Tally)
-- [ ] Web dashboard with charts & analytics
-- [ ] Batch processing with progress tracking
-
-## License
-
-This project is for educational purposes.
+---
+*Created with ❤️ by the Invocify Team.*
