@@ -1237,10 +1237,12 @@ html {
 }
 
 /* Theme Toggle Button */
-/* Premium Theme Controller Capsule */
+/* Premium Theme Controller Capsule - Glassmorphic Version */
 .theme-controller {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     width: 86px;
     height: 44px;
     border-radius: 100px;
@@ -1248,15 +1250,26 @@ html {
     cursor: pointer;
     position: relative;
     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    box-shadow: var(--shadow-soft), inset 0 2px 4px rgba(0,0,0,0.02);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
 }
 
+[data-theme="dark"] .theme-controller {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .theme-controller:hover {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-premium), inset 0 2px 4px rgba(0,0,0,0.02);
-    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .theme-controller:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .controller-track {
