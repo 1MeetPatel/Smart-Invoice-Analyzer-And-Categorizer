@@ -749,24 +749,77 @@ async function exportCSV() {
 // ========================
 // Toast Notifications
 // ========================
+// Dynamic Absolute Stack Engine for Extreme Smoothness
+let activeToasts = [];
+
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
+
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
+    
+    // Add to our tracking stack (at the top)
+    activeToasts.unshift(toast);
     container.appendChild(toast);
     
-    // Trigger entry animation
-    requestAnimationFrame(() => {
-        toast.classList.add('show');
-    });
+    // Position and Animate
+    updateToastPositions(true);
     
     // Auto-dismiss
     setTimeout(() => {
-        toast.classList.remove('show');
-        // Wait for exit animation to finish before removing from DOM
-        setTimeout(() => toast.remove(), 600);
-    }, 4000);
+        dismissToast(toast);
+    }, 3000);
+}
+
+function dismissToast(toast) {
+    const index = activeToasts.indexOf(toast);
+    if (index === -1) return;
+    
+    // Remove from tracking first
+    activeToasts.splice(index, 1);
+    
+    // Animate the target toast away
+    const exit = toast.animate([
+        { transform: toast.style.transform + ' scale(1)', opacity: 1 },
+        { transform: 'translateY(-100px) scale(0.95)', opacity: 0 }
+    ], {
+        duration: 600,
+        easing: 'cubic-bezier(0.2, 1, 0.2, 1)',
+        fill: 'forwards'
+    });
+    
+    // Immediately glide the rest of the stack into their new positions
+    updateToastPositions(false);
+    
+    exit.onfinish = () => toast.remove();
+}
+
+function updateToastPositions(isNew = false) {
+    let currentY = 0;
+    
+    activeToasts.forEach((toast, i) => {
+        const isTarget = isNew && i === 0;
+        const startTransform = isTarget ? 'translateY(-100px) scale(0.95)' : toast.style.transform || 'translateY(0px)';
+        const targetY = currentY;
+        const targetTransform = `translateY(${targetY}px) scale(1)`;
+        
+        toast.animate([
+            { transform: startTransform, opacity: isTarget ? 0 : 1 },
+            { transform: targetTransform, opacity: 1 }
+        ], {
+            duration: 700,
+            easing: 'cubic-bezier(0.2, 1, 0.2, 1)',
+            fill: 'forwards'
+        });
+        
+        // Update the style property so we can track the "Last" position for the next animation
+        toast.style.transform = targetTransform;
+        
+        // Offset by height + gap for the next toast below
+        currentY += 56; // Standard pill height estimate
+    });
 }
 
 window.showPage = function(page) {
