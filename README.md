@@ -1,10 +1,10 @@
-# 💎 Invocify — AI-Powered Financial Intelligence
+#  Invocify — AI-Powered Financial Intelligence
 
 **Invocify** is a state-of-the-art, high-fidelity invoice analyzer designed to transform raw financial documents into actionable insights. Leveraging advanced OCR technology, Google Generative AI, and a premium glassmorphic interface, Invocify automates the extraction, categorization, and visualization of invoice data with surgical precision.
 
 ![Invocify Dashboard](https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=1200)
 
-## 🚀 Key Features
+##  Key Features
 
 - **Surgical OCR Extraction**: High-precision data extraction from PDF, JPG, PNG, and TIFF invoices using Tesseract and OpenCV preprocessing.
 - **AI-Driven Categorization**: Leverages **Google Gemini Pro** to intelligently group expenses into financial categories with high confidence.
@@ -14,7 +14,7 @@
 - **Fluid Notification System**: Professional glassmorphic "Toast" alerts with silky-smooth slide-down/up animations.
 - **Dynamic Theme Engine**: Immersive Light/Dark mode with a custom-engineered sliding controller and trailing glow effects.
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 ### Backend & AI
 - **Framework**: Python 3.9+, Flask
@@ -29,7 +29,7 @@
 - **Design Language**: Pure CSS Glassmorphism with `backdrop-filter` optics
 - **Motion**: Custom `cubic-bezier` physics for fluid, non-elastic animations
 
-## 📦 Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 - Python 3.9 or higher
@@ -57,9 +57,4 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 python app.py
 ```
 Or execute the included `run.bat` for a one-click launch on Windows.
-
-## 🎨 Design Philosophy
-Invocify is built on the principle of **Tactile Visibility**. Every interaction—from the sliding theme toggle to the sliding notification toasts—is engineered to provide a high-end, hardware-like experience that feels responsive, alive, and professional.
-
----
-*Created with ❤️ by the Invocify Team.*
+*
