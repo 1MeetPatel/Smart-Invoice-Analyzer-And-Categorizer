@@ -10,7 +10,9 @@ const state = {
     results: [],
     processing: false,
     processedCount: 0,
-    charts: {}
+    charts: {},
+    resultsDirty: true,
+    reportsDirty: true
 };
 
 // ========================
@@ -107,10 +109,29 @@ function initNavigation() {
             });
 
             if (page === 'reports') {
-                updateReports();
+                setTimeout(() => updateReports(), 50);
+            } else if (page === 'all-invoices') {
+                setTimeout(() => renderResults(), 50);
             }
+            
+            updateNavIndicator();
         });
     });
+
+    // Initial positioning
+    window.addEventListener('load', () => setTimeout(updateNavIndicator, 100));
+    window.addEventListener('resize', updateNavIndicator);
+}
+
+function updateNavIndicator() {
+    const activeLink = document.querySelector('.header-nav-link.active');
+    const indicator = document.getElementById('nav-indicator');
+    
+    if (activeLink && indicator) {
+        indicator.style.width = `${activeLink.offsetWidth}px`;
+        indicator.style.height = `${activeLink.offsetHeight}px`;
+        indicator.style.transform = `translateX(${activeLink.offsetLeft}px)`;
+    }
 }
 
 // ========================
@@ -156,6 +177,8 @@ async function processFiles(files) {
     DOM.processingSection.style.display = 'none';
 
     if (successCount > 0) {
+        state.resultsDirty = true;
+        state.reportsDirty = true;
         renderResults();
         updateReports();
         showToast(`Processed ${successCount} file(s)`, 'success');
@@ -185,11 +208,15 @@ async function uploadAndProcess(file) {
 // Results Rendering
 // ========================
 function renderResults() {
+    if (!state.resultsDirty) return;
+
     // Render Full Table
     DOM.resultsBody.innerHTML = '';
     state.results.forEach((record, index) => {
         DOM.resultsBody.appendChild(createRow(record, index));
     });
+
+    state.resultsDirty = false;
 }
 
 function createRow(record, index) {
@@ -363,6 +390,8 @@ function initCharts() {
 }
 
 function updateReports() {
+    if (!state.reportsDirty && state.results.length > 0) return;
+
     if (state.results.length === 0) {
         DOM.reportEmptyState.style.display = 'flex';
         DOM.reportActiveContent.style.display = 'none';
@@ -458,6 +487,8 @@ function updateReports() {
 
     // Heatmap
     renderHeatmap(heatmapData);
+    
+    state.reportsDirty = false;
 }
 
 function getDepartment(category) {
@@ -582,6 +613,8 @@ function parseAmount(amt) {
 
 window.deleteRow = function(index) {
     state.results.splice(index, 1);
+    state.resultsDirty = true;
+    state.reportsDirty = true;
     renderResults();
     updateReports();
 };

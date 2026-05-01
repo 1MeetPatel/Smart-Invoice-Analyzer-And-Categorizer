@@ -129,6 +129,7 @@ body {
     background: var(--accent-color);
     color: white;
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    animation: navPulse 3s infinite ease-in-out;
 }
 
 .header-right {
@@ -212,8 +213,8 @@ body {
 
 /* --- Cards & Glass Effect --- */
 .card, .table-card, .chart-card, .stat-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    
     border-radius: var(--radius-lg);
     border: 1px solid white;
     box-shadow: var(--shadow-premium);
@@ -241,9 +242,9 @@ body {
     text-align: center;
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: #ffffff;
+    
+    -webkit-
     position: relative;
     overflow: hidden;
 }
@@ -948,7 +949,7 @@ body {
 .legend-bar {
     width: 10px;
     height: 160px;
-    background: linear-gradient(to top, rgba(99, 102, 241, 1), rgba(99, 102, 241, 0.05));
+    background: linear-gradient(to bottom, rgba(99, 102, 241, 1), rgba(99, 102, 241, 0.05));
     border-radius: 5px;
     border: 1px solid rgba(0,0,0,0.05);
 }
@@ -1048,4 +1049,118 @@ body {
     .chart-card-box.span-2 {
         grid-column: span 1;
     }
+}
+
+/* --- Page Transitions --- */
+.page-view {
+    display: none;
+    opacity: 0;
+    will-change: transform, opacity, filter;
+}
+
+.page-view.active {
+    display: block;
+    animation: pageReveal 0.3s ease-out forwards;
+}
+
+@keyframes pageReveal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes navPulse {
+    0%, 100% { box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+    50% { box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5); transform: translateY(-1px); }
+}@keyframes pageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Buttery Smooth Enhancements --- */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Staggered Card Entrance */
+.page-view.active .card, 
+.page-view.active .chart-card-box,
+.page-view.active .metric-card,
+.page-view.active .table-card {
+    animation: cardEntrance 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+/* Stagger Delays */
+.page-view.active .metric-card:nth-child(1) { animation-delay: 0.05s; }
+.page-view.active .metric-card:nth-child(2) { animation-delay: 0.1s; }
+.page-view.active .metric-card:nth-child(3) { animation-delay: 0.15s; }
+.page-view.active .metric-card:nth-child(4) { animation-delay: 0.2s; }
+
+.page-view.active .chart-card-box:nth-child(odd) { animation-delay: 0.25s; }
+.page-view.active .chart-card-box:nth-child(even) { animation-delay: 0.3s; }
+
+@keyframes cardEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+}
+
+/* Premium Button Physics */
+.btn-choose, .btn-csv, .header-nav-link {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-choose:active, .btn-csv:active {
+    transform: scale(0.92) !important;
+}
+
+/* --- OVERRIDE FOR BUTTERY SMOOTH NAV --- */
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    background: rgba(226, 232, 240, 0.4);
+    padding: 6px;
+    border-radius: 16px;
+}
+
+.nav-indicator {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    background: var(--accent-color);
+    border-radius: 12px;
+    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1), width 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+    z-index: 1;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.header-nav-link {
+    padding: 10px 24px !important;
+    color: var(--text-secondary) !important;
+    text-decoration: none !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    transition: color 0.3s ease !important;
+    z-index: 2 !important;
+    position: relative !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.header-nav-link.active {
+    color: white !important;
 }
