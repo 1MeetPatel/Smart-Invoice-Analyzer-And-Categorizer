@@ -167,31 +167,41 @@ body {
 }
 
 .btn-csv {
-    background: var(--card-bg);
+    background: rgba(99, 102, 241, 0.05);
     color: var(--accent-color);
-    border: 1.5px solid var(--accent-color);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 10px 24px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     font-size: 0.95rem;
     font-weight: 700;
     display: flex;
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    transition: all 0.25s;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .btn-csv {
+    background: rgba(129, 140, 248, 0.08);
+    border: 1px solid rgba(129, 140, 248, 0.2);
 }
 
 .btn-csv:hover {
     background: var(--accent-color);
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.25);
+    border-color: transparent;
 }
 
 .user-profile {
     width: 48px;
     height: 48px;
-    background: var(--card-bg);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--border-color);
     border-radius: 50%;
     display: flex;
@@ -199,13 +209,20 @@ body {
     justify-content: center;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.25s;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .user-profile {
+    background: rgba(15, 23, 42, 0.4);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 .user-profile:hover {
+    background: rgba(255, 255, 255, 0.2);
     border-color: var(--accent-color);
     color: var(--accent-color);
     transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.1);
 }
 
 /* --- Content Body --- */
