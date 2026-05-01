@@ -1,4 +1,4 @@
-# 🚀 Invocify — Enterprise AI Invoice Analytics
+#  Invocify — Enterprise AI Invoice Analytics
 
 **Invocify** is a professional-grade, high-performance invoice analyzer that transforms chaotic financial documents into structured, actionable intelligence. It combines the speed of local OCR with the deep reasoning of Google Gemini AI to deliver surgical extraction precision.
 
