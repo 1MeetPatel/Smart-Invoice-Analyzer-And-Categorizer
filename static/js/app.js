@@ -18,39 +18,43 @@ const state = {
 // ========================
 // DOM References
 // ========================
-const DOM = {
-    uploadZone: document.getElementById('upload-zone'),
-    fileInput: document.getElementById('file-input'),
-    processingSection: document.getElementById('processing-section'),
-    processingStatus: document.getElementById('processing-status'),
-    resultsBody: document.getElementById('results-body'),
-    exportCsvBtn: document.getElementById('export-csv-btn'),
-    navLinks: document.querySelectorAll('.header-nav-link'),
-    pageViews: document.querySelectorAll('.page-view'),
-    themeController: document.getElementById('theme-controller'),
-    // Reports Dashboard
-    reportEmptyState: document.getElementById('reports-empty-state'),
-    reportActiveContent: document.getElementById('reports-active-content'),
-    pulseTotal: document.getElementById('pulse-total'),
-    pulseTax: document.getElementById('pulse-tax'),
-    pulseTaxPct: document.getElementById('pulse-tax-pct'),
-    pulseAvg: document.getElementById('pulse-avg'),
-    pulseCount: document.getElementById('pulse-count'),
-    pulseConfidence: document.getElementById('pulse-confidence'),
-    topPartnerName: document.getElementById('top-partner-name'),
-    topPartnerStats: document.getElementById('top-partner-stats'),
-    auditFlagCard: document.getElementById('audit-flag-card')
-};
+let DOM = {};
 
 // ========================
 // Initialization
 // ========================
 document.addEventListener('DOMContentLoaded', () => {
+    // Populate DOM References
+    DOM = {
+        uploadZone: document.getElementById('upload-zone'),
+        fileInput: document.getElementById('file-input'),
+        processingSection: document.getElementById('processing-section'),
+        processingStatus: document.getElementById('processing-status'),
+        resultsBody: document.getElementById('results-body'),
+        exportCsvBtn: document.getElementById('export-csv-btn'),
+        navLinks: document.querySelectorAll('.header-nav-link'),
+        pageViews: document.querySelectorAll('.page-view'),
+        themeController: document.getElementById('theme-controller'),
+        // Reports Dashboard
+        reportEmptyState: document.getElementById('reports-empty-state'),
+        reportActiveContent: document.getElementById('reports-active-content'),
+        pulseTotal: document.getElementById('pulse-total'),
+        pulseTax: document.getElementById('pulse-tax'),
+        pulseTaxPct: document.getElementById('pulse-tax-pct'),
+        pulseAvg: document.getElementById('pulse-avg'),
+        pulseCount: document.getElementById('pulse-count'),
+        pulseConfidence: document.getElementById('pulse-confidence'),
+        topPartnerName: document.getElementById('top-partner-name'),
+        topPartnerStats: document.getElementById('top-partner-stats'),
+        auditFlagCard: document.getElementById('audit-flag-card')
+    };
+
     initUploadZone();
     initButtons();
     initNavigation();
     initTheme();
     initCharts();
+    initProfile();
     checkHealth();
 });
 
@@ -201,7 +205,7 @@ function initNavigation() {
             if (page === 'reports') {
                 setTimeout(() => updateReports(), 50);
             } else if (page === 'all-invoices') {
-                setTimeout(() => renderResults(), 50);
+                setTimeout(() => renderResults(true), 50);
             }
             
             updateNavIndicator();
@@ -254,12 +258,15 @@ async function processFiles(files) {
         try {
             const res = await uploadAndProcess(files[i]);
             if (res && res.status === 'success') {
-                state.results.unshift(res.data); // Add new ones to top
+                state.results.unshift(res.data);
                 successCount++;
                 state.processedCount++;
+            } else {
+                showToast(`Failed: ${res ? res.message : 'Unknown server error'}`, 'error');
             }
         } catch (err) {
-            showToast(`Failed: ${files[i].name}`, 'error');
+            console.error("Processing error:", err);
+            showToast(`Error: ${files[i].name}`, 'error');
         }
     }
 
@@ -285,26 +292,43 @@ async function uploadAndProcess(file) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/upload', {
-        method: 'POST',
-        body: formData,
-    });
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData,
+        });
 
-    if (!response.ok) return null;
-    return await response.json();
+        return await response.json();
+    } catch (e) {
+        return { status: 'error', message: e.message };
+    }
 }
 
 // ========================
 // Results Rendering
 // ========================
-function renderResults() {
-    if (!state.resultsDirty) return;
+// ========================
+// Results Rendering
+// ========================
+function renderResults(force = false) {
+    console.log("Rendering results. Force:", force, "Dirty:", state.resultsDirty, "Count:", state.results.length);
+    if (!state.resultsDirty && !force) return;
+
+    if (!DOM.resultsBody) {
+        console.error("DOM.resultsBody not found!");
+        return;
+    }
 
     // Render Full Table
     DOM.resultsBody.innerHTML = '';
-    state.results.forEach((record, index) => {
-        DOM.resultsBody.appendChild(createRow(record, index));
-    });
+    
+    if (state.results.length === 0) {
+        DOM.resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">No invoices processed yet.</td></tr>';
+    } else {
+        state.results.forEach((record, index) => {
+            DOM.resultsBody.appendChild(createRow(record, index));
+        });
+    }
 
     state.resultsDirty = false;
 }
@@ -316,14 +340,14 @@ function createRow(record, index) {
         <td>${escapeHtml(record.invoice_number || 'N/A')}</td>
         <td>${escapeHtml(record.date || 'N/A')}</td>
         <td style="font-weight: 500; color: var(--text-primary);">${escapeHtml(record.product || 'Various Products')}</td>
-        <td style="font-weight: 800; color: var(--accent-color);">${parseFloat(record.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-        <td style="color: var(--text-secondary);">${parseFloat(record.tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        <td style="font-weight: 800; color: var(--accent-color);">${formatCurrency(record.total)}</td>
+        <td style="color: var(--text-secondary);">${formatCurrency(record.tax)}</td>
         <td style="font-size: 0.85rem; color: var(--text-secondary); font-family: monospace;">${escapeHtml(record.tax_id || 'N/A')}</td>
         <td style="font-size: 0.85rem; color: var(--text-secondary); font-family: monospace;">${escapeHtml(record.buyer_id || 'N/A')}</td>
         <td><span class="status-badge badge-processed">Processed</span></td>
         <td>
             <div class="action-links">
-                <span class="action-link" onclick="deleteRow(${index})" title="Delete" style="color: #ef4444;">
+                <span class="action-link" onclick="deleteRow(${index})" title="Delete" style="color: #ef4444; cursor: pointer;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </span>
             </div>
@@ -331,6 +355,30 @@ function createRow(record, index) {
     `;
     return row;
 }
+
+function formatCurrency(val) {
+    const num = parseFloat(val || 0);
+    if (isNaN(num)) return '0.00';
+    return num.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+window.deleteRow = function(index) {
+    if (confirm('Delete this record?')) {
+        state.results.splice(index, 1);
+        state.resultsDirty = true;
+        state.reportsDirty = true;
+        renderResults();
+        updateReports();
+        showToast('Record deleted', 'info');
+    }
+};
 
 function getCategoryBadgeClass(cat) {
     const map = {
@@ -827,11 +875,120 @@ window.showPage = function(page) {
     if (link) link.click();
 };
 
-function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+
+// ========================
+// Profile Management
+// ========================
+function initProfile() {
+    const profileTrigger = document.getElementById('profile-trigger');
+    const profileModal = document.getElementById('profile-modal');
+    const closeBtn = document.getElementById('close-profile-modal');
+    const uploadBtn = document.getElementById('btn-upload-avatar');
+    const imageInput = document.getElementById('profile-image-input');
+    const imagePreview = document.getElementById('image-preview');
+    const nameInput = document.getElementById('user-name-input');
+    const saveBtn = document.getElementById('save-profile-btn');
+    const avatarContainer = document.getElementById('profile-avatar-container');
+
+    // Load saved profile
+    const savedProfile = localStorage.getItem('userProfile');
+    if (savedProfile) {
+        const data = JSON.parse(savedProfile);
+        if (data.name) nameInput.value = data.name;
+        if (data.avatar) {
+            updateAvatarUI(data.avatar);
+        }
+    }
+
+    // Modal Control Logic (Snappy Sync)
+    const animateModalOpen = () => {
+        profileModal.classList.add('active');
+        const modalContent = profileModal.querySelector('.modal-content');
+        
+        // Background Fade
+        profileModal.animate([
+            { opacity: 0 },
+            { opacity: 1 }
+        ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
+
+        // Content Glide (Snappy 10px Path)
+        modalContent.animate([
+            { transform: 'translateY(10px) scale(0.99)', opacity: 0 },
+            { transform: 'translateY(0) scale(1)', opacity: 1 }
+        ], {
+            duration: 300,
+            easing: 'cubic-bezier(0.2, 1, 0.2, 1)', 
+            fill: 'forwards'
+        });
+    };
+
+    const animateModalClose = () => {
+        const modalContent = profileModal.querySelector('.modal-content');
+        
+        // Content Glide Out (Instant Snap)
+        const contentAnim = modalContent.animate([
+            { transform: 'translateY(0) scale(1)', opacity: 1 },
+            { transform: 'translateY(5px) scale(1)', opacity: 0 }
+        ], {
+            duration: 200,
+            easing: 'ease-in',
+            fill: 'forwards'
+        });
+
+        // Background Fade Out
+        profileModal.animate([
+            { opacity: 1 },
+            { opacity: 0 }
+        ], { duration: 200, easing: 'ease-in', fill: 'forwards' });
+
+        contentAnim.onfinish = () => {
+            profileModal.classList.remove('active');
+        };
+    };
+
+    profileTrigger.addEventListener('click', animateModalOpen);
+    closeBtn.addEventListener('click', animateModalClose);
+
+    // Close on outside click
+    profileModal.addEventListener('click', (e) => {
+        if (e.target === profileModal) animateModalClose();
+    });
+
+    // Image Upload Logic
+    uploadBtn.addEventListener('click', () => imageInput.click());
+
+    imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64Image = event.target.result;
+                imagePreview.innerHTML = `<img src="${base64Image}" alt="Preview">`;
+                // We'll save it when they click "Save"
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Save Logic
+    saveBtn.addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        const previewImg = imagePreview.querySelector('img');
+        const avatar = previewImg ? previewImg.src : null;
+
+        const profileData = { name, avatar };
+        localStorage.setItem('userProfile', JSON.stringify(profileData));
+        
+        if (avatar) updateAvatarUI(avatar);
+        
+        showToast("Profile updated successfully!");
+        profileModal.classList.remove('active');
+    });
+
+    function updateAvatarUI(src) {
+        avatarContainer.innerHTML = `<img src="${src}" alt="Avatar">`;
+        imagePreview.innerHTML = `<img src="${src}" alt="Preview">`;
+    }
 }
 
 

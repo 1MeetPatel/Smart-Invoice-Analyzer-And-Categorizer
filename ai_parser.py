@@ -12,74 +12,94 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 
-def parse_with_gemini(image_path):
+def parse_with_gemini(file_path):
     """
-    Uses Google Gemini Vision to extract structured data from an invoice image.
+    Uses Google Gemini to extract structured data from an invoice (Image or PDF).
     High-fidelity fallback for complex layouts.
     """
     if not API_KEY:
         return {"status": "error", "message": "Google API Key not configured"}
 
     try:
-        # 1. Initialize the model (Updated to use 2.0 Flash)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # 1. Initialize the model
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
-        # 2. Prepare the image - use context manager to avoid file lock on Windows
-        img = Image.open(image_path)
-        img.load()  # Force load into memory so file handle can be released
-        img_copy = img.copy()
-        img.close()
-
-        # 3. Create the prompt
+        # 2. Prepare the content
+        ext = os.path.splitext(file_path)[1].lower()
+        content = []
+        
+        # Create the prompt
         prompt = """
-        Analyze this invoice image and extract the following information in JSON format.
+        Analyze this invoice and extract the following information in JSON format.
         Focus on HIGH PRECISION for these specific fields.
         
         ### JSON SCHEMA:
         - invoice_number: (string, the unique ID of the invoice)
         - date: (string, format YYYY-MM-DD)
         - product: (string, describe WHAT KIND of product/service this is)
-        - total: (number, the final GRAND TOTAL amount due. DO NOT pick up months from dates or tax amounts)
+        - total: (number, the final GRAND TOTAL amount due)
+        - subtotal: (number, total before tax)
+        - tax: (number, total tax amount)
         - tax_id: (string, the Seller's Tax ID)
         - buyer_id: (string, the Buyer's Tax ID if present)
         - vendor: (string, the name of the seller)
         - category: (string: Food, Utilities, Software, Marketing, Office, Travel, Other)
         
         ### CRITICAL RULES:
-        - TOTAL: Look for "Grand Total", "Total Amount", or "Balance Due". If multiple totals exist, the Grand Total is usually the LARGEST numeric value at the bottom. 
-        - DATE: Do not confuse month numbers with the total amount.
         - Return ONLY raw JSON.
+        - Ensure numeric values are numbers, not strings.
+        - If a value is missing, use null or 0.
         """
+        content.append(prompt)
 
-        # 4. Generate content with Retry for Quota
+        if ext == '.pdf':
+            # Handle PDF
+            with open(file_path, "rb") as f:
+                pdf_data = f.read()
+            content.append({
+                "mime_type": "application/pdf",
+                "data": pdf_data
+            })
+        else:
+            # Handle Image
+            img = Image.open(file_path)
+            img.load()
+            content.append(img)
+
+        # 3. Generate content with Retry for Quota
         import time
         max_retries = 3
         for i in range(max_retries):
             try:
-                response = model.generate_content([prompt, img_copy])
+                response = model.generate_content(content)
                 break
             except Exception as e:
                 if "429" in str(e) and i < max_retries - 1:
-                    time.sleep(5) # Wait for quota reset
+                    time.sleep(2)
                     continue
                 raise e
         
-        # 5. Parse the JSON response
-        # Clean potential markdown formatting
+        # 4. Parse the JSON response
         raw_text = response.text.strip()
-        if raw_text.startswith("```json"):
-            raw_text = raw_text.replace("```json", "").replace("```", "").strip()
-        elif raw_text.startswith("```"):
-            raw_text = raw_text.replace("```", "").strip()
+        if "```json" in raw_text:
+            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[1].split("```")[0].strip()
             
         data = json.loads(raw_text)
         
-        # Ensure total is a float
-        if isinstance(data.get('total'), str):
-            data['total'] = float(data['total'].replace(',', ''))
+        # Data Normalization
+        for field in ['total', 'subtotal', 'tax']:
+            if field in data and isinstance(data[field], str):
+                try:
+                    data[field] = float(data[field].replace(',', ''))
+                except:
+                    data[field] = 0.0
+            elif field not in data:
+                data[field] = 0.0
         
         data['status'] = 'success'
-        data['confidence'] = 0.99  # AI vision is high confidence
+        data['confidence'] = 0.99
         data['source'] = 'gemini'
         
         return data

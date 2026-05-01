@@ -98,21 +98,24 @@ def upload_file():
                 pass # Continue with local data if AI fails
         
         # Step 4: Categorize (Local & Fast)
-        category_result = categorize_invoice(
-            parsed_data.get('vendor', ''),
-            raw_text,
-            parsed_data.get('total', '0.00')
-        )
-
-        # Merge category info into parsed data
-        parsed_data['category'] = category_result['category']
-        parsed_data['cat_confidence'] = category_result['confidence']
+        # Step 4: Categorize (Local & Fast)
+        if parsed_data.get('source') != 'gemini':
+            category_result = categorize_invoice(
+                parsed_data.get('vendor', ''),
+                raw_text,
+                parsed_data.get('total', '0.00')
+            )
+            parsed_data['category'] = category_result['category']
+            parsed_data['cat_confidence'] = category_result['confidence']
+        else:
+            parsed_data['cat_confidence'] = 0.99
         
-        # Explicitly mention what kind of product it is (Category: Description)
-        if parsed_data.get('product') and parsed_data['category'] != 'Other':
-            parsed_data['product'] = f"{parsed_data['category']}: {parsed_data['product']}"
+        # Explicitly mention what kind of product it is
+        if parsed_data.get('product') and parsed_data.get('category') != 'Other':
+            if not str(parsed_data['product']).startswith(f"{parsed_data['category']}:"):
+                parsed_data['product'] = f"{parsed_data['category']}: {parsed_data['product']}"
         elif not parsed_data.get('product'):
-            parsed_data['product'] = parsed_data['category']
+            parsed_data['product'] = parsed_data.get('category', 'Other')
             
         parsed_data['filename'] = filename
 
