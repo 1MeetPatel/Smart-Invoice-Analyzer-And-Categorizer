@@ -2,9 +2,8 @@
 
 **Invocify** is a professional-grade, high-performance invoice analyzer that transforms chaotic financial documents into structured, actionable intelligence. It combines the speed of local OCR with the deep reasoning of Google Gemini AI to deliver surgical extraction precision.
 
-![Invocify Dashboard](https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=1200)
 
-## 💎 The "Bulletproof Snappy" Experience
+##  The "Bulletproof Snappy" Experience
 Designed for zero-lag interactions, Invocify utilizes a custom-engineered UI architecture that avoids expensive browser filters.
 - **60FPS Guaranteed**: Smooth animations even on low-end hardware.
 - **Instant Response**: No more waiting for UI transitions; every click is immediate.
@@ -12,20 +11,20 @@ Designed for zero-lag interactions, Invocify utilizes a custom-engineered UI arc
 
 ---
 
-## 🔥 Key Features
+##  Key Features
 
-### 🧠 Intelligent Extraction
+###  Intelligent Extraction
 - **Dual-Engine Processing**: Uses local Tesseract OCR for speed and Google Gemini 1.5/2.0 Flash for complex, low-quality, or handwritten documents.
 - **Native PDF Intelligence**: Direct PDF processing without local Poppler dependencies—perfect for scanned financial records.
 - **Handwriting Support**: AI fallback ensures even messy handwritten totals are captured with high accuracy.
 
-### 📊 Advanced Analytics
+###  Advanced Analytics
 - **Expenditure Flow**: Real-time line charts tracking spending trends over time.
 - **Category Intelligence**: Automated grouping into Utilities, Software, Marketing, Office, Travel, Food, and more.
 - **Vendor Insights**: Rank your top vendors by spend to identify potential savings.
 - **Tax Efficiency**: Breakdown of tax/VAT contributions across all processed transactions.
 
-### 🛡️ Production-Grade UX
+### Production-Grade UX
 - **Hardened Rendering**: Error-resilient table engine with safe numeric formatting and HTML escaping.
 - **Snappy Modal System**: Profile management and document previews that snap into view instantly.
 - **Real-Time Toasts**: Beautifully animated notifications for success, warnings, and error reporting.
@@ -33,7 +32,7 @@ Designed for zero-lag interactions, Invocify utilizes a custom-engineered UI arc
 
 ---
 
-## 🏗️ Architecture & Logic
+##  Architecture & Logic
 
 Invocify follows a **"Local-First, AI-Always"** strategy:
 1. **Preprocessing**: Invoices are cleaned and contrasted via OpenCV.
@@ -44,9 +43,9 @@ Invocify follows a **"Local-First, AI-Always"** strategy:
 
 ---
 
-## 🛠️ Installation & Setup
+##  Installation & Setup
 
-### 📋 Prerequisites
+###  Prerequisites
 - **Python 3.9+**
 - **Tesseract OCR**: 
   - [Windows Installer](https://github.com/UB-Mannheim/tesseract/wiki)
@@ -80,7 +79,7 @@ python app.py
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 ├── app.py              # Main Flask Server & Routing
@@ -96,7 +95,7 @@ python app.py
 
 ---
 
-## ❓ Troubleshooting
+##  Troubleshooting
 
 | Issue | Solution |
 | :--- | :--- |
@@ -110,5 +109,3 @@ python app.py
 ## 📜 License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
----
-**Built with ❤️ for High-Performance Financial Analysis.**
