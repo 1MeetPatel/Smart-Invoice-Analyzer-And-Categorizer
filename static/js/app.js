@@ -504,7 +504,7 @@ function renderHeatmap(data) {
         cells.className = 'heatmap-cells';
 
         const deptData = data[dept] || Array(12).fill(0);
-        deptData.forEach(val => {
+        data[dept].forEach((val, idx) => {
             const cell = document.createElement('div');
             cell.className = 'heatmap-cell';
             
@@ -512,11 +512,34 @@ function renderHeatmap(data) {
             const opacity = val === 0 ? 0.03 : 0.1 + (val / maxVal) * 0.9;
             cell.style.backgroundColor = `rgba(99, 102, 241, ${opacity})`;
             
-            if (val > 0) {
-                cell.title = `${dept}: ${val.toLocaleString()}`;
-            } else {
-                cell.title = `${dept}: No data`;
-            }
+            // Custom Tooltip Events
+            cell.addEventListener('mouseenter', (e) => {
+                const tooltip = document.getElementById('heatmap-tooltip');
+                if (!tooltip) return;
+                
+                const amount = val > 0 ? val.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : 'No data';
+                tooltip.innerHTML = `<strong>${dept}</strong><br>${amount}`;
+                tooltip.style.opacity = '1';
+                tooltip.style.visibility = 'visible';
+            });
+
+            cell.addEventListener('mousemove', (e) => {
+                const tooltip = document.getElementById('heatmap-tooltip');
+                if (!tooltip) return;
+                
+                const x = e.pageX + 15;
+                const y = e.pageY - 40;
+                tooltip.style.left = `${x}px`;
+                tooltip.style.top = `${y}px`;
+            });
+
+            cell.addEventListener('mouseleave', () => {
+                const tooltip = document.getElementById('heatmap-tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.visibility = 'hidden';
+                }
+            });
             
             cells.appendChild(cell);
         });

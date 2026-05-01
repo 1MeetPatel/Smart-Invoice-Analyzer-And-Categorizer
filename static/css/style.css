@@ -960,6 +960,32 @@ body {
     text-transform: uppercase;
 }
 
+/* Custom Tooltip Styling */
+.custom-tooltip {
+    position: absolute;
+    padding: 10px 14px;
+    background: #1e293b;
+    color: #94a3b8;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    z-index: 9999;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    line-height: 1.4;
+    border: 1px solid #334155;
+}
+
+.custom-tooltip strong {
+    font-size: 0.9rem;
+    color: #f8fafc;
+    display: block;
+    margin-bottom: 2px;
+}
+
+
 
 
 .chart-canvas-wrapper {
