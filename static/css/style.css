@@ -180,12 +180,12 @@ body {
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    /* GENTLE AURA: Whisper-quiet Physics */
+    /* GENTLE AURA: Silky-smooth Physics */
     transition: 
-        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-        background 0.3s ease,
-        box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-        color 0.3s ease;
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.2s ease,
+        box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.2s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
     white-space: nowrap;
     will-change: transform;
@@ -200,8 +200,8 @@ body {
 .btn-csv:hover {
     background: var(--accent-color);
     color: white;
-    transform: translateY(-1.5px) scale(1.015); /* Whisper-quiet lift */
-    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+    transform: translateY(-1px); /* Gentle 1px lift */
+    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.15);
     border-color: transparent;
 }
 
