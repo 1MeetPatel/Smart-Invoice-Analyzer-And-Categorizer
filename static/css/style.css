@@ -80,6 +80,9 @@
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background: var(--body-bg-gradient, radial-gradient(circle at top left, #f8fafc, #f1f5f9));
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
     color: var(--text-primary);
     min-height: 100vh;
     line-height: 1.6;
