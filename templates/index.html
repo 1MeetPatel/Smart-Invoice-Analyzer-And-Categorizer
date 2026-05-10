@@ -241,12 +241,12 @@
 
     <!-- Processing Overlay (Kept from previous version but styled minimally) -->
     <div id="processing-section" style="display:none; position:fixed; inset:0; background:rgba(255,255,255,0.8); z-index:1000; align-items:center; justify-content:center; flex-direction:column;">
-        <div class="spinner-ring" style="width:50px; height:50px; border:4px solid #e2e8f0; border-top-color:#6366f1; border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <div class="spinner-ring" style="width:50px; height:50px; border:4px solid #e2e8f0; border-top-color:#6366f1; border-radius:50%; animation:spin 1s linear infinite; will-change: transform; transform: translateZ(0);"></div>
         <p id="processing-status" style="margin-top:16px; font-weight:600; color:#1e293b;">Processing...</p>
     </div>
 
     <script src="/static/js/app.js"></script>
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    <style>@keyframes spin { to { transform: translateZ(0) rotate3d(0, 0, 1, 360deg); } }</style>
     <!-- Tooltips -->
     <div id="heatmap-tooltip" class="custom-tooltip"></div>
 </body>
