@@ -982,7 +982,7 @@ function initProfile() {
         if (avatar) updateAvatarUI(avatar);
         
         showToast("Profile updated successfully!");
-        profileModal.classList.remove('active');
+        animateModalClose();
     });
 
     function updateAvatarUI(src) {
