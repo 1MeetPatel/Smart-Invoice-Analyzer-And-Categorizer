@@ -1688,6 +1688,15 @@ body, .page-title h2, .page-title p,
     .content-body {
         padding: 40px 24px;
     }
+
+    /* Stack charts on tablet & landscape mobile devices */
+    .charts-grid-layout {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    .chart-card-box.span-2 {
+        grid-column: span 1 !important;
+    }
 }
 
 /* Mobile Devices Optimization (max-width: 768px) */
@@ -1785,42 +1794,74 @@ body, .page-title h2, .page-title p,
         font-size: 0.95rem;
     }
 
-    /* Metrics Dashboard Grid */
+    /* Metrics Dashboard Grid - 1-column horizontal list cards for premium mobile layout */
     .metrics-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: 1fr !important;
         gap: 12px;
         margin-bottom: 24px;
     }
 
     .metric-card {
-        padding: 18px 14px;
+        display: grid !important;
+        grid-template-areas: 
+            "label value"
+            "footer value" !important;
+        grid-template-columns: 1fr auto !important;
+        align-items: center !important;
+        gap: 4px 16px !important;
+        padding: 16px 20px !important;
     }
 
     .metric-label {
-        font-size: 0.75rem;
-    }
-
-    .metric-value {
-        font-size: 1.6rem;
-        margin-bottom: 4px;
+        grid-area: label !important;
+        margin-bottom: 0 !important;
+        font-size: 0.8rem !important;
     }
 
     .metric-footer {
-        font-size: 0.75rem;
+        grid-area: footer !important;
+        font-size: 0.8rem !important;
     }
 
-    /* Reports Title */
+    .metric-value {
+        grid-area: value !important;
+        font-size: 1.5rem !important;
+        margin-bottom: 0 !important;
+        text-align: right !important;
+    }
+
+    /* Reports Title — Give it a readable glass card on mobile */
     .reports-header-title {
         text-align: center;
-        margin-bottom: 28px;
+        margin-bottom: 20px;
+        background: var(--card-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px 20px;
+        box-shadow: var(--shadow-soft);
     }
 
     .reports-header-title h2 {
-        font-size: 1.8rem;
+        font-size: 1.35rem;
+        letter-spacing: -0.5px;
+        /* Reset gradient text to solid for readability on mobile */
+        background: none;
+        -webkit-background-clip: unset;
+        -webkit-text-fill-color: var(--text-primary);
+        color: var(--text-primary);
     }
 
     .reports-header-title p {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
+        margin-top: 4px;
+        color: var(--text-muted);
+    }
+
+    /* Reports dashboard container */
+    .reports-dashboard {
+        padding: 0;
     }
 
     /* Charts & Layouts */
@@ -1830,6 +1871,13 @@ body, .page-title h2, .page-title p,
 
     .chart-canvas-wrapper {
         min-height: 260px;
+        width: 100%;
+        position: relative;
+    }
+
+    .chart-canvas-wrapper canvas {
+        width: 100% !important;
+        height: 100% !important;
     }
 
     .chart-card-box {
@@ -1908,9 +1956,15 @@ body, .page-title h2, .page-title p,
         height: 80px;
         margin-bottom: 24px;
     }
+
+    /* Footer */
+    .footer {
+        padding: 32px 16px;
+        text-align: center;
+    }
 }
 
-/* Extra small devices / CSV button text hiding & Mobile Metrics Row stack */
+/* Extra small devices / CSV button text hiding */
 @media (max-width: 600px) {
     .btn-csv-text {
         display: none;
@@ -1928,39 +1982,6 @@ body, .page-title h2, .page-title p,
 
     .btn-csv svg {
         margin: 0;
-    }
-
-    /* 1-column mobile metrics list layout (extremely readable and native-feeling) */
-    .metrics-grid {
-        grid-template-columns: 1fr !important;
-        gap: 12px;
-    }
-
-    .metric-card {
-        display: grid;
-        grid-template-areas: 
-            "label value"
-            "footer value";
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        gap: 4px 16px;
-        padding: 16px 20px;
-    }
-
-    .metric-label {
-        grid-area: label;
-        margin-bottom: 0;
-    }
-
-    .metric-footer {
-        grid-area: footer;
-    }
-
-    .metric-value {
-        grid-area: value;
-        font-size: 1.4rem;
-        margin-bottom: 0;
-        text-align: right;
     }
 }
 
