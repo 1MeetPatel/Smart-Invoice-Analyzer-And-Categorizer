@@ -8,8 +8,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/89/three.min.js"></script>
 </head>
 <body>
+    <!-- Shader Background Container -->
+    <div id="shader-background" class="shader-background"></div>
+
     <div id="toast-container"></div>
 
     <!-- Main Content -->
@@ -246,6 +250,7 @@
     </div>
 
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/shader.js"></script>
     <style>@keyframes spin { to { transform: translateZ(0) rotate3d(0, 0, 1, 360deg); } }</style>
     <!-- Tooltips -->
     <div id="heatmap-tooltip" class="custom-tooltip"></div>

@@ -11,8 +11,8 @@
     
     /* Backgrounds */
     --bg-main: #f1f5f9;
-    --card-bg: rgba(255, 255, 255, 0.85);
-    --glass-bg: rgba(255, 255, 255, 0.7);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --glass-bg: rgba(255, 255, 255, 0.6);
     
     /* Text */
     --text-primary: #0f172a;
@@ -49,8 +49,8 @@
     --accent-soft: rgba(129, 140, 248, 0.15);
     
     --bg-main: #0f172a;
-    --card-bg: #1e293b;
-    --glass-bg: rgba(30, 41, 59, 0.85);
+    --card-bg: rgba(30, 41, 59, 0.95);
+    --glass-bg: rgba(30, 41, 59, 0.6);
     --body-bg-gradient: radial-gradient(circle at top left, #1e293b, #0f172a);
     
     --text-primary: #f8fafc;
@@ -88,6 +88,19 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* --- Shader Background --- */
+.shader-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.8; /* Slightly dialed back to ensure readability */
 }
 
 /* --- Layout Wrappers --- */
@@ -282,9 +295,10 @@ body {
 }
 
 /* --- Cards & Glass Effect --- */
-.card, .table-card, .chart-card, .stat-card {
+.card, .table-card, .chart-card, .stat-card, .chart-card-box, .metric-card, .reports-empty {
     background: var(--card-bg);
-    
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-premium);
@@ -302,7 +316,8 @@ body {
     display: grid;
     grid-template-columns: 1fr;
     gap: 40px;
-    margin-bottom: 60px;
+    margin: 0 auto 60px auto;
+    max-width: 800px;
 }
 
 .upload-dropzone {
@@ -883,7 +898,8 @@ body {
     border-radius: 32px;
     border: 2px dashed var(--border-color);
     box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
-    margin: 40px 0;
+    margin: 40px auto;
+    max-width: 800px;
     transition: all 0.3s ease;
 }
 
