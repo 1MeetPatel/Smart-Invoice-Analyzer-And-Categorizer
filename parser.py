@@ -78,7 +78,7 @@ def extract_numbers_from_line(line):
             continue
             
         val = parse_amount_str(num_str)
-        if val is None:
+        if val is None or val >= 100000000: # Ignore unrealistic amounts (e.g. phone/bank numbers)
             continue
             
         # Check if the number has a decimal part (not thousands)
@@ -227,8 +227,8 @@ def extract_amount(text, field_type='total'):
     elif field_type == 'subtotal':
         labels = r'(?:Sub\s*Total|Before\s*Tax|Taxable\s*Amount|Total\s*Excl\s*VAT|Net\s*worth|Net\s*Amount|Taxable\s*Value|Taxable\s*Subtotal)'
     elif field_type == 'tax':
-        # Avoid matching VAT [%] or Tax [%] headers by using negative lookahead for '%'
-        labels = r'(?:Total\s*VAT|Total\s*Tax|VAT(?!\s*\[)(?!\s*%)|Tax(?!\s*\[)(?!\s*%)|GST|Sales\s*Tax|CGST|SGST|IGST|Taxes|Total\s*VAT/GST)'
+        # Avoid matching VAT ID, Tax ID, or Tax % headers
+        labels = r'(?:Total\s*VAT|Total\s*Tax|VAT(?!\s*\[)(?!\s*%)(?!\s*ID)(?!\s*No)(?!\s*Reg)|Tax(?!\s*\[)(?!\s*%)(?!\s*ID)(?!\s*No)(?!\s*Reg)|GST|Sales\s*Tax|CGST|SGST|IGST|Taxes|Total\s*VAT/GST)'
     
     # 1. Label-based search
     # This regex matches the entire line following a label to find multiple amounts

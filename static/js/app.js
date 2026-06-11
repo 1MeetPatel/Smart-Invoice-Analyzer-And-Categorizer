@@ -651,9 +651,9 @@ function updateReports() {
     const avgInvoice = state.results.length > 0 ? (totalSpend / state.results.length) : 0;
 
     // 2. Hero UI
-    DOM.pulseTotal.textContent = `₹ ${totalSpend.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-    DOM.pulseTax.textContent = `₹ ${totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-    document.getElementById('pulse-avg').textContent = `₹ ${avgInvoice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    DOM.pulseTotal.textContent = totalSpend.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    DOM.pulseTax.textContent = totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    document.getElementById('pulse-avg').textContent = avgInvoice.toLocaleString('en-IN', { minimumFractionDigits: 2 });
     DOM.pulseConfidence.textContent = avgConf;
     document.getElementById('total-count-label').textContent = `Across ${state.results.length} invoices`;
 
