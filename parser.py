@@ -7,35 +7,135 @@ import re
 from datetime import datetime
 
 
+def parse_amount_str(amount_str):
+    """
+    Parses a string representing a monetary amount into a float.
+    Handles US/UK format (1,234.56), European format (1.234,56 or 1 234,56),
+    and plain numbers (1234 or 1234.5 or 1234,5).
+    """
+    # Remove currency symbols and other non-numeric / non-punctuation chars
+    clean = re.sub(r'[₹\$€£¥a-zA-Z\s]', '', amount_str)
+    if not clean:
+        return None
+        
+    # Check if there are both commas and periods
+    if ',' in clean and '.' in clean:
+        if clean.rfind('.') > clean.rfind(','):
+            # Comma is thousands, period is decimal
+            clean = clean.replace(',', '')
+        else:
+            # Period is thousands, comma is decimal
+            clean = clean.replace('.', '').replace(',', '.')
+    elif ',' in clean:
+        # Only comma exists
+        parts = clean.split(',')
+        if len(parts) == 2:
+            if len(parts[1]) == 3 and len(parts[0]) <= 3:
+                # E.g., "1,250" -> 1250
+                clean = clean.replace(',', '')
+            else:
+                # E.g., "12,50" -> 12.50, "1,2" -> 1.2
+                clean = clean.replace(',', '.')
+        else:
+            # Multiple commas
+            clean = clean.replace(',', '')
+    elif '.' in clean:
+        # Only period exists
+        parts = clean.split('.')
+        if len(parts) == 2:
+            if len(parts[1]) == 3 and len(parts[0]) <= 3:
+                # E.g., "1.250" -> 1250
+                clean = clean.replace('.', '')
+        elif len(parts) > 2:
+            # Multiple periods
+            clean = clean.replace('.', '')
+            
+    try:
+        return float(clean)
+    except ValueError:
+        return None
+
+
+def extract_numbers_from_line(line):
+    """
+    Extracts all numeric values from a line, along with their context.
+    Returns a list of dicts: {'val': float, 'is_percent': bool, 'has_currency': bool, 'is_at_end': bool, 'is_decimal': bool}
+    """
+    results = []
+    # Regex to find numbers: matches integers and decimals.
+    # We look for a currency symbol or word, followed by a number, or just a number.
+    pattern = r'(?:([₹\$€£¥]|USD|EUR|GBP|INR|CAD|AUD)\s*)?(\b\d[\d\s.,]*)(?:\s*(%))?'
+    matches = re.finditer(pattern, line, re.IGNORECASE)
+    
+    for m in matches:
+        currency = m.group(1)
+        num_str = m.group(2).strip()
+        is_percent = m.group(3) is not None
+        
+        # Clean trailing periods, commas, or spaces from the number string
+        num_str = re.sub(r'[.,\s]+$', '', num_str)
+        if not num_str:
+            continue
+            
+        val = parse_amount_str(num_str)
+        if val is None:
+            continue
+            
+        # Check if the number has a decimal part (not thousands)
+        is_decimal = re.search(r'[.,]\d{1,2}$', num_str) is not None
+        
+        # Check if this match is at the end of the line
+        end_pos = m.end()
+        trailing_part = line[end_pos:].strip()
+        is_at_end = len(trailing_part) == 0 or re.match(r'^(?:USD|EUR|GBP|INR|CAD|AUD|[\.\-\/\*,]+)$', trailing_part, re.IGNORECASE) is not None
+        
+        results.append({
+            'val': val,
+            'is_percent': is_percent,
+            'has_currency': currency is not None,
+            'is_at_end': is_at_end,
+            'is_decimal': is_decimal
+        })
+    return results
+
+
 def extract_invoice_number(text):
-    """Extract invoice number while filtering out Tax IDs (GSTIN/VAT/PAN)."""
+    """Extract invoice number while filtering out Tax IDs (GSTIN/VAT/PAN) and labels."""
     patterns = [
-        # Standard invoice number labels
-        r'(?:Invoice|Inv|Bill|Receipt|Order|Reference|Ref)[\s]*(?:No|Number|#|Num|ID)?[\s]*[:\-\.]?\s*([A-Za-z0-9\-\/\.]+)',
-        # standalone INV patterns
+        # standalone INV patterns (highest priority — unambiguous)
         r'(INV[\-\s]?\d[\w\-\.]*)',
+        # Standalone invoice number labels with value on next line (strict check)
+        r'\b(?:Invoice|Inv|Bill|Receipt|Order|Reference|Ref)\b[ \t]*(?:\b(?:No|Number|Num|ID|Ref|Reference)\b|#)?[ \t]*[:\-\.]?[ \t]*\n\s*([A-Za-z0-9\-\/\.]+)',
+        # Standard invoice number labels on same line
+        r'\b(?:Invoice|Inv|Bill|Receipt|Order|Reference|Ref)\b[ \t]*(?:\b(?:No|Number|Num|ID|Ref|Reference)\b|#)?[ \t]*[:\-\.]?[ \t]*([A-Za-z0-9\-\/\.]+)',
         # Standalone numeric patterns (e.g. # 12345)
         r'#\s*(\d{4,})',
     ]
 
-    # Labels that indicate it's NOT an invoice number
-    tax_labels = r'(?:GST|VAT|PAN|TIN|Tax\s*ID|Reg|Registration|ABN|EIN)'
+    # Labels that indicate it's NOT an invoice number (use word-boundary regex to avoid false positives like 'pan' in 'company')
+    tax_label_words = ['GST', 'GSTIN', 'VAT', 'PAN', 'TIN', 'Tax ID', 'Reg No', 'Registration', 'ABN', 'EIN']
+    blacklist = {'invoice', 'number', 'date', 'total', 'amount', 'tax', 'subtotal', 'bill', 'receipt', 'inv', 'no', 'id', 'to', 'from', 'vendor', 'customer', 'client', 'ref', 'reference'}
 
     for pattern in patterns:
         matches = re.finditer(pattern, text, re.IGNORECASE)
         for m in matches:
             result = m.group(1).strip() if m.groups() else m.group(0).strip()
             
-            # Context check: Look for tax labels before the match
-            start_idx = max(0, m.start() - 25)
-            context = text[start_idx:m.start()].lower()
-            if any(label.lower() in context for label in tax_labels.split('|')):
+            # Context check: Look for tax labels before the match (word-boundary matching)
+            start_idx = max(0, m.start() - 30)
+            context = text[start_idx:m.start()]
+            if any(re.search(r'\b' + re.escape(label) + r'\b', context, re.IGNORECASE) for label in tax_label_words):
                 continue
 
             # Filtering:
             # 1. Clean trailing punctuation
             result = re.sub(r'[\.\-\/]+$', '', result).strip()
-            # 2. Length check: Tax IDs are often 12-15 chars, simple invoice numbers are usually shorter or have specific prefixes
+            
+            # 2. Blacklist check
+            if result.lower() in blacklist:
+                continue
+                
+            # 3. Length check: Tax IDs are often 12-15 chars, simple invoice numbers are usually shorter or have specific prefixes
             if 3 <= len(result) <= 20:
                 # If it's all letters or all numbers (too long), it might be an ID
                 if len(result) > 12 and result.isalnum(): continue
@@ -121,14 +221,14 @@ def normalize_date(date_str):
 
 
 def extract_amount(text, field_type='total'):
-    """Extract monetary amounts handling European formats and multiple values on one line."""
+    """Extract monetary amounts handling various formats (decimal/integer) and multiple values on one line."""
     if field_type == 'total':
-        labels = r'(?:Total|Grand\s*Total|Amount\s*Due|Balance|Payable|Net\s*Amount|Total\s*Incl\s*VAT|Gross\s*worth)'
+        labels = r'(?:Total|Grand\s*Total|Amount\s*Due|Balance|Payable|Net\s*Amount|Total\s*Incl\s*VAT|Gross\s*worth|Total\s*Amount|Gross\s*Amount|Invoice\s*Total|Amount\s*Payable)'
     elif field_type == 'subtotal':
-        labels = r'(?:Sub\s*Total|Before\s*Tax|Taxable\s*Amount|Total\s*Excl\s*VAT|Net\s*worth)'
+        labels = r'(?:Sub\s*Total|Before\s*Tax|Taxable\s*Amount|Total\s*Excl\s*VAT|Net\s*worth|Net\s*Amount|Taxable\s*Value|Taxable\s*Subtotal)'
     elif field_type == 'tax':
-        # Avoid matching VAT [%] headers by using negative lookahead for '%'
-        labels = r'(?:Total\s*VAT|Total\s*Tax|VAT(?!\s*\[)|Tax(?!\s*\[)|GST|Sales\s*Tax|CGST|SGST|IGST|Taxes)'
+        # Avoid matching VAT [%] or Tax [%] headers by using negative lookahead for '%'
+        labels = r'(?:Total\s*VAT|Total\s*Tax|VAT(?!\s*\[)(?!\s*%)|Tax(?!\s*\[)(?!\s*%)|GST|Sales\s*Tax|CGST|SGST|IGST|Taxes|Total\s*VAT/GST)'
     
     # 1. Label-based search
     # This regex matches the entire line following a label to find multiple amounts
@@ -145,24 +245,24 @@ def extract_amount(text, field_type='total'):
         
         line_amounts = []
         for line in lines:
-            # Find all number-like strings in this line
-            num_matches = re.findall(r'[₹\$€£]?\s*(\d[\d\s.,]*[.,]\d{2})\b', line)
+            candidates = extract_numbers_from_line(line)
+            # Filter out percent values
+            candidates = [c for c in candidates if not c['is_percent']]
             
-            for nm in num_matches:
-                try:
-                    clean = nm.strip().replace(' ', '')
-                    if ',' in clean and ('.' not in clean or clean.rfind(',') > clean.rfind('.')):
-                        clean = clean.replace('.', '').replace(',', '.')
-                    else:
-                        clean = clean.replace(',', '')
-                    
-                    val = float(clean)
-                    if val > 0: line_amounts.append(val)
-                except: continue
-            
-            # If we found amounts on this line, we usually don't need to look at further lines
-            if line_amounts: break
-            
+            if not candidates:
+                continue
+                
+            # If there are candidates with currency, discard candidates without currency
+            has_currency_any = any(c['has_currency'] for c in candidates)
+            if has_currency_any:
+                candidates = [c for c in candidates if c['has_currency']]
+                
+            for c in candidates:
+                line_amounts.append(c['val'])
+                
+            if line_amounts:
+                break
+                
         if line_amounts:
             if field_type == 'total':
                 all_found_amounts.append(max(line_amounts))
@@ -190,12 +290,11 @@ def extract_amount(text, field_type='total'):
             # (e.g. Tax shouldn't be the largest number on the page)
             # Find the global max on the page for comparison
             global_max = 0
-            all_nums = re.findall(r'\d[\d\s.,]*[.,]\d{2}\b', text)
-            for n in all_nums:
-                try: 
-                    v = float(n.replace(' ', '').replace(',', '.'))
-                    if v > global_max: global_max = v
-                except: continue
+            for line in text.split('\n'):
+                candidates = extract_numbers_from_line(line)
+                for c in candidates:
+                    if not c['is_percent'] and c['val'] > global_max:
+                        global_max = c['val']
                 
             if field_type == 'tax':
                 # Filter candidates: Tax is almost always < 50% of total
@@ -206,26 +305,31 @@ def extract_amount(text, field_type='total'):
             
             return all_found_amounts[0]
 
-    # 2. Broad Fallback (Largest price-like number on page)
+    # 2. Broad Fallback (Smart prioritization of numbers on the page)
     if field_type == 'total':
-        broad_pattern = r'[₹\$€£]?\s*(\d[\d\s.,]*[.,]\d{2})\b'
-        matches = re.findall(broad_pattern, text)
-        vals = []
-        for m in matches:
-            try:
-                clean = m.strip().replace(' ', '')
-                if ',' in clean and ('.' not in clean or clean.rfind(',') > clean.rfind('.')):
-                    clean = clean.replace('.', '').replace(',', '.')
-                else:
-                    clean = clean.replace(',', '')
-                val = float(clean)
-                if 1990 <= val <= 2030: continue
-                if val > 1000000: continue # Skip likely IDs
-                vals.append(val)
-            except: pass
-        
-        if vals:
-            return max(vals)
+        candidates = []
+        for line in text.split('\n'):
+            line_candidates = extract_numbers_from_line(line)
+            for c in line_candidates:
+                if c['is_percent']: continue
+                val = c['val']
+                if 1990 <= val <= 2030: continue # Skip years
+                if val > 1000000: continue # Skip likely IDs / phone numbers
+                if val <= 0: continue
+                
+                candidates.append({
+                    'val': val,
+                    'has_currency': c['has_currency'],
+                    'is_decimal': c['is_decimal']
+                })
+                
+        if candidates:
+            # Sort by has_currency (True first), then is_decimal (True first), then magnitude (largest first)
+            def fallback_key(cand):
+                return (1 if cand['has_currency'] else 0, 1 if cand['is_decimal'] else 0, cand['val'])
+            
+            candidates.sort(key=fallback_key, reverse=True)
+            return candidates[0]['val']
             
     return 0.0
 

@@ -64,59 +64,87 @@ document.addEventListener('DOMContentLoaded', () => {
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
     const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
     
+    // Apply initial theme instantly (no transition on first load)
+    document.documentElement.setAttribute('data-theme', theme);
+
     if (DOM.themeController) {
         DOM.themeController.addEventListener('click', (e) => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            // Create cinematic wash effect
-            createThemeWash(e, newTheme);
-            
-            // Short delay to let the wash start before changing colors
-            setTimeout(() => {
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                updateChartTheme(newTheme);
-            }, 50);
+
+            window.isTransitioning = true;
+            setTimeout(() => { window.isTransitioning = false; }, 350);
+
+            // Get click origin for the ripple epicenter
+            const rect = DOM.themeController.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+
+            // Use View Transitions API if available (Chrome 111+)
+            if (document.startViewTransition) {
+                document.startViewTransition(() => {
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+                // Update charts after transition
+                setTimeout(() => updateChartTheme(newTheme), 400);
+            } else {
+                // Fallback: circular clip-path ripple from toggle center
+                performThemeRipple(x, y, newTheme);
+            }
         });
     }
 }
 
-function createThemeWash(e, targetTheme) {
-    const wash = document.createElement('div');
-    wash.className = 'theme-wash';
-    
-    // Position at click or center of controller
-    const rect = DOM.themeController.getBoundingClientRect();
-    const x = e ? e.clientX : rect.left + rect.width / 2;
-    const y = e ? e.clientY : rect.top + rect.height / 2;
-    
-    wash.style.left = `${x}px`;
-    wash.style.top = `${y}px`;
-    
-    // Set color based on target theme
-    if (targetTheme === 'dark') {
-        wash.style.background = 'rgba(15, 23, 42, 0.4)';
-    } else {
-        wash.style.background = 'rgba(255, 255, 255, 0.4)';
-    }
-    
-    document.body.appendChild(wash);
-    
-    // Trigger animation
-    requestAnimationFrame(() => {
-        wash.classList.add('active');
-    });
-    
-    // Cleanup
+function performThemeRipple(x, y, newTheme) {
+    // Calculate max radius needed to cover the entire screen from origin
+    const maxDim = Math.max(
+        Math.hypot(x, y),
+        Math.hypot(window.innerWidth - x, y),
+        Math.hypot(x, window.innerHeight - y),
+        Math.hypot(window.innerWidth - x, window.innerHeight - y)
+    );
+
+    const isDark = newTheme === 'dark';
+
+    // Create ripple overlay
+    const ripple = document.createElement('div');
+    ripple.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: ${isDark ? '#0f172a' : '#f8fafc'};
+        z-index: 9999;
+        pointer-events: none;
+        clip-path: circle(0px at ${x}px ${y}px);
+        will-change: clip-path;
+    `;
+    document.body.appendChild(ripple);
+
+    // Force reflow
+    ripple.getBoundingClientRect();
+
+    // Expand ripple to cover screen
+    ripple.style.transition = `clip-path 0.55s cubic-bezier(0.4, 0, 0.2, 1)`;
+    ripple.style.clipPath = `circle(${maxDim}px at ${x}px ${y}px)`;
+
+    // At halfway point, swap the theme (hidden under the ripple)
     setTimeout(() => {
-        wash.remove();
-    }, 1000);
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateChartTheme(newTheme);
+    }, 280);
+
+    // Shrink ripple away from the other side to reveal new theme
+    setTimeout(() => {
+        ripple.style.transition = `clip-path 0.45s cubic-bezier(0.4, 0, 0.2, 1)`;
+        ripple.style.clipPath = `circle(0px at ${x}px ${y}px)`;
+        setTimeout(() => ripple.remove(), 460);
+    }, 320);
 }
+
 
 function updateChartTheme(theme) {
     const textColor = theme === 'dark' ? '#f8fafc' : '#475569';
@@ -190,30 +218,54 @@ function initNavigation() {
             const page = link.getAttribute('data-page');
             if (!page) return;
 
-            // Update active link
+            const currentActive = document.querySelector('.page-view.active');
+
+            // Update active link immediately
             DOM.navLinks.forEach(l => l.classList.remove('active'));
             link.classList.add('active');
-
-            // Update visible view
-            DOM.pageViews.forEach(view => {
-                view.classList.remove('active');
-                if (view.id === `${page}-view`) {
-                    view.classList.add('active');
-                }
-            });
-
-            if (page === 'reports') {
-                setTimeout(() => updateReports(), 50);
-            } else if (page === 'all-invoices') {
-                setTimeout(() => renderResults(true), 50);
-            }
-            
             updateNavIndicator();
+
+            // Fade out old view, then swap
+            if (currentActive) {
+                currentActive.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
+                currentActive.style.opacity = '0';
+                currentActive.style.transform = 'translateY(-8px)';
+
+                setTimeout(() => {
+                    currentActive.style.transition = '';
+                    currentActive.style.opacity = '';
+                    currentActive.style.transform = '';
+                    currentActive.classList.remove('active');
+
+                    const nextView = document.getElementById(`${page}-view`);
+                    if (nextView) nextView.classList.add('active');
+
+                    if (page === 'reports') setTimeout(() => updateReports(), 50);
+                    else if (page === 'all-invoices') setTimeout(() => renderResults(true), 50);
+                }, 180);
+            } else {
+                DOM.pageViews.forEach(view => {
+                    view.classList.remove('active');
+                    if (view.id === `${page}-view`) view.classList.add('active');
+                });
+                if (page === 'reports') setTimeout(() => updateReports(), 50);
+                else if (page === 'all-invoices') setTimeout(() => renderResults(true), 50);
+            }
         });
     });
 
-    // Initial positioning
-    window.addEventListener('load', () => setTimeout(updateNavIndicator, 100));
+    // Initial indicator positioning: disable transition for first paint
+    window.addEventListener('load', () => {
+        const indicator = document.getElementById('nav-indicator');
+        if (indicator) {
+            indicator.style.transition = 'none';
+            updateNavIndicator();
+            // Re-enable transition after first position is set
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                indicator.style.transition = '';
+            }));
+        }
+    });
     window.addEventListener('resize', updateNavIndicator);
 }
 
@@ -222,6 +274,8 @@ function updateNavIndicator() {
     const indicator = document.getElementById('nav-indicator');
     
     if (activeLink && indicator) {
+        const linkRect = activeLink.getBoundingClientRect();
+        const navRect = activeLink.closest('.header-nav').getBoundingClientRect();
         indicator.style.width = `${activeLink.offsetWidth}px`;
         indicator.style.height = `${activeLink.offsetHeight}px`;
         indicator.style.transform = `translateX(${activeLink.offsetLeft}px)`;
@@ -326,7 +380,11 @@ function renderResults(force = false) {
         DOM.resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">No invoices processed yet.</td></tr>';
     } else {
         state.results.forEach((record, index) => {
-            DOM.resultsBody.appendChild(createRow(record, index));
+            const row = createRow(record, index);
+            // Staggered entrance: each row fades in 50ms after the previous
+            row.style.animationDelay = `${index * 45}ms`;
+            row.classList.add('fade-in-row');
+            DOM.resultsBody.appendChild(row);
         });
     }
 
@@ -895,63 +953,47 @@ function initProfile() {
     if (savedProfile) {
         const data = JSON.parse(savedProfile);
         if (data.name) nameInput.value = data.name;
-        if (data.avatar) {
-            updateAvatarUI(data.avatar);
-        }
+        if (data.avatar) updateAvatarUI(data.avatar);
     }
 
-    // Modal Control Logic (Snappy Sync)
-    const animateModalOpen = () => {
+    // Pure CSS-transition-driven open/close (smoothest possible)
+    const openModal = () => {
         profileModal.classList.add('active');
-        const modalContent = profileModal.querySelector('.modal-content');
-        
-        // Background Fade
-        profileModal.animate([
-            { opacity: 0 },
-            { opacity: 1 }
-        ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
-
-        // Content Glide (Snappy 10px Path)
-        modalContent.animate([
-            { transform: 'translateY(10px) scale(0.99)', opacity: 0 },
-            { transform: 'translateY(0) scale(1)', opacity: 1 }
-        ], {
-            duration: 300,
-            easing: 'cubic-bezier(0.2, 1, 0.2, 1)', 
-            fill: 'forwards'
-        });
     };
 
-    const animateModalClose = () => {
+    const closeModal = () => {
+        // Reverse the CSS transition, then remove .active after it finishes
         const modalContent = profileModal.querySelector('.modal-content');
-        
-        // Content Glide Out (Instant Snap)
-        const contentAnim = modalContent.animate([
-            { transform: 'translateY(0) scale(1)', opacity: 1 },
-            { transform: 'translateY(5px) scale(1)', opacity: 0 }
-        ], {
-            duration: 200,
-            easing: 'ease-in',
-            fill: 'forwards'
-        });
+        modalContent.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease';
+        modalContent.style.transform = 'translateY(16px) scale(0.97)';
+        modalContent.style.opacity = '0';
+        profileModal.style.transition = 'background 0.22s ease';
+        profileModal.style.background = 'rgba(15, 23, 42, 0.0)';
+        profileModal.style.pointerEvents = 'none';
 
-        // Background Fade Out
-        profileModal.animate([
-            { opacity: 1 },
-            { opacity: 0 }
-        ], { duration: 200, easing: 'ease-in', fill: 'forwards' });
-
-        contentAnim.onfinish = () => {
+        setTimeout(() => {
             profileModal.classList.remove('active');
-        };
+            // Reset inline styles so CSS classes take over next open
+            modalContent.style.transition = '';
+            modalContent.style.transform = '';
+            modalContent.style.opacity = '';
+            profileModal.style.transition = '';
+            profileModal.style.background = '';
+            profileModal.style.pointerEvents = '';
+        }, 230);
     };
 
-    profileTrigger.addEventListener('click', animateModalOpen);
-    closeBtn.addEventListener('click', animateModalClose);
+    profileTrigger.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
 
-    // Close on outside click
+    // Close on backdrop click
     profileModal.addEventListener('click', (e) => {
-        if (e.target === profileModal) animateModalClose();
+        if (e.target === profileModal) closeModal();
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && profileModal.classList.contains('active')) closeModal();
     });
 
     // Image Upload Logic
@@ -964,7 +1006,6 @@ function initProfile() {
             reader.onload = (event) => {
                 const base64Image = event.target.result;
                 imagePreview.innerHTML = `<img src="${base64Image}" alt="Preview">`;
-                // We'll save it when they click "Save"
             };
             reader.readAsDataURL(file);
         }
@@ -981,12 +1022,12 @@ function initProfile() {
         
         if (avatar) updateAvatarUI(avatar);
         
-        showToast("Profile updated successfully!");
-        animateModalClose();
+        showToast('Profile updated successfully!', 'success');
+        closeModal();
     });
 
     function updateAvatarUI(src) {
-        avatarContainer.innerHTML = `<img src="${src}" alt="Avatar">`;
+        avatarContainer.innerHTML = `<img src="${src}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
         imagePreview.innerHTML = `<img src="${src}" alt="Preview">`;
     }
 }

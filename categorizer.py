@@ -41,7 +41,8 @@ CATEGORIES = {
         'microsoft', 'adobe', 'slack', 'zoom', 'github', 'gitlab',
         'antivirus', 'security', 'ssl', 'database', 'api', 'plugin',
         'app', 'application', 'digital', 'technology', 'tech',
-        'dropbox', 'salesforce', 'atlassian', 'jira', 'confluence', 'vps'
+        'dropbox', 'salesforce', 'atlassian', 'jira', 'confluence', 'vps',
+        'amazon web services'
     ],
     'Professional Services': [
         'consulting', 'consultant', 'legal', 'lawyer', 'attorney',
