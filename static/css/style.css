@@ -1809,7 +1809,25 @@ body, .page-title h2, .page-title p,
         font-size: 0.75rem;
     }
 
-    /* Charts */
+    /* Reports Title */
+    .reports-header-title {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+
+    .reports-header-title h2 {
+        font-size: 1.8rem;
+    }
+
+    .reports-header-title p {
+        font-size: 0.95rem;
+    }
+
+    /* Charts & Layouts */
+    .charts-grid-layout {
+        gap: 16px;
+    }
+
     .chart-canvas-wrapper {
         min-height: 260px;
     }
@@ -1821,6 +1839,41 @@ body, .page-title h2, .page-title p,
     .chart-box-title {
         font-size: 1.1rem;
         margin-bottom: 16px;
+    }
+
+    /* Category Legend (Single column on small screens to prevent overlap) */
+    .category-legend {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    /* Heatmap Mobile Optimization (Rows scroll, legend stays clean at bottom) */
+    .heatmap-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+        overflow-x: visible;
+    }
+
+    .heatmap-main-content {
+        overflow-x: auto;
+        padding-bottom: 12px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .heatmap-legend {
+        flex-direction: row;
+        justify-content: center;
+        width: 100%;
+        height: auto;
+        padding-bottom: 10px;
+        gap: 16px;
+    }
+
+    .legend-bar {
+        width: 160px;
+        height: 10px;
+        background: linear-gradient(to right, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 1));
     }
 
     /* Tables */
@@ -1857,7 +1910,7 @@ body, .page-title h2, .page-title p,
     }
 }
 
-/* Extra small devices / CSV button text hiding */
+/* Extra small devices / CSV button text hiding & Mobile Metrics Row stack */
 @media (max-width: 600px) {
     .btn-csv-text {
         display: none;
@@ -1875,6 +1928,39 @@ body, .page-title h2, .page-title p,
 
     .btn-csv svg {
         margin: 0;
+    }
+
+    /* 1-column mobile metrics list layout (extremely readable and native-feeling) */
+    .metrics-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    .metric-card {
+        display: grid;
+        grid-template-areas: 
+            "label value"
+            "footer value";
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 4px 16px;
+        padding: 16px 20px;
+    }
+
+    .metric-label {
+        grid-area: label;
+        margin-bottom: 0;
+    }
+
+    .metric-footer {
+        grid-area: footer;
+    }
+
+    .metric-value {
+        grid-area: value;
+        font-size: 1.4rem;
+        margin-bottom: 0;
+        text-align: right;
     }
 }
 
