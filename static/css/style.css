@@ -1670,3 +1670,220 @@ body, .page-title h2, .page-title p,
         border-color    0.25s ease !important;
 }
 
+/* =============================================
+   Mobile Responsiveness Overrides
+   ============================================= */
+
+/* Tablet Optimization (max-width: 992px) */
+@media (max-width: 992px) {
+    .header {
+        padding: 0 24px;
+    }
+    .header-left {
+        gap: 24px;
+    }
+    .header-right {
+        gap: 16px;
+    }
+    .content-body {
+        padding: 40px 24px;
+    }
+}
+
+/* Mobile Devices Optimization (max-width: 768px) */
+@media (max-width: 768px) {
+    .header {
+        display: grid;
+        grid-template-areas: 
+            "logo actions"
+            "nav nav";
+        grid-template-columns: auto 1fr;
+        height: auto;
+        padding: 16px 20px;
+        gap: 16px;
+        align-items: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    .header-left {
+        display: contents; /* Allows logo and nav to participate directly in header grid */
+    }
+    
+    .header-logo {
+        grid-area: logo;
+    }
+    
+    .header-nav {
+        grid-area: nav;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 4px;
+        border-radius: 12px;
+    }
+    
+    .header-nav-link {
+        flex: 1;
+        text-align: center;
+        padding: 8px 10px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .header-right {
+        grid-area: actions;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .content-body {
+        padding: 24px 16px;
+    }
+
+    .page-title {
+        margin-bottom: 24px;
+    }
+
+    .page-title h2 {
+        font-size: 1.8rem;
+    }
+
+    .page-title p {
+        font-size: 0.95rem;
+    }
+
+    /* Cards adjustments */
+    .card, .table-card, .chart-card, .stat-card, .chart-card-box, .metric-card, .reports-empty {
+        padding: 24px 16px;
+        border-radius: 16px;
+    }
+
+    /* Upload Dropzone */
+    .upload-dropzone {
+        padding: 48px 16px;
+        border-radius: 20px;
+    }
+
+    .upload-icon-box {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+        border-radius: 20px;
+    }
+
+    .upload-icon-box svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .upload-text {
+        font-size: 1.2rem;
+    }
+
+    .btn-choose {
+        padding: 12px 28px;
+        font-size: 0.95rem;
+    }
+
+    /* Metrics Dashboard Grid */
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .metric-card {
+        padding: 18px 14px;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+    }
+
+    .metric-value {
+        font-size: 1.6rem;
+        margin-bottom: 4px;
+    }
+
+    .metric-footer {
+        font-size: 0.75rem;
+    }
+
+    /* Charts */
+    .chart-canvas-wrapper {
+        min-height: 260px;
+    }
+
+    .chart-card-box {
+        padding: 20px 16px;
+    }
+
+    .chart-box-title {
+        font-size: 1.1rem;
+        margin-bottom: 16px;
+    }
+
+    /* Tables */
+    .table-header {
+        padding: 16px 20px;
+    }
+
+    .table-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .data-table th, .data-table td {
+        padding: 12px 16px;
+        font-size: 0.85rem;
+    }
+
+    /* Empty state */
+    .reports-empty {
+        padding: 48px 16px;
+    }
+
+    .reports-empty h2 {
+        font-size: 1.6rem;
+    }
+
+    .reports-empty p {
+        font-size: 0.95rem;
+    }
+
+    .empty-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 24px;
+    }
+}
+
+/* Extra small devices / CSV button text hiding */
+@media (max-width: 600px) {
+    .btn-csv-text {
+        display: none;
+    }
+    
+    .btn-csv {
+        padding: 0;
+        border-radius: 50%;
+        width: 42px;
+        height: 42px;
+        justify-content: center;
+        align-items: center;
+        gap: 0;
+    }
+
+    .btn-csv svg {
+        margin: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        width: calc(100% - 32px);
+        padding: 24px 20px;
+        margin: 16px;
+        border-radius: 20px;
+    }
+}
+
